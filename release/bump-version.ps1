@@ -1,3 +1,7 @@
+param(
+    [switch]$Revision
+)
+
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
 
@@ -8,11 +12,17 @@ $xml.Load($projectPath)
 $versionNode = $xml.SelectSingleNode("/Project/PropertyGroup/Version")
 
 $projectVersion = [version]$versionNode.InnerText
-$currentVersion = "{0}.{1}.{2}" -f $projectVersion.Major, $projectVersion.Minor, $projectVersion.Build
-$nextVersion = "{0}.{1}.{2}" -f $projectVersion.Major, $projectVersion.Minor, ($projectVersion.Build + 1)
+$currentVersion = $projectVersion.ToString()
+if ($Revision) {
+    $nextVersion = "{0}.{1}.{2}.{3}" -f $projectVersion.Major, $projectVersion.Minor, $projectVersion.Build, ([Math]::Max($projectVersion.Revision, 0) + 1)
+}
+else {
+    $nextVersion = "{0}.{1}.{2}" -f $projectVersion.Major, $projectVersion.Minor, ($projectVersion.Build + 1)
+}
 $versionString = "v$nextVersion"
 
-$changeLog = git log --pretty=format:"# %s%n%b" "v$currentVersion..HEAD" --invert-grep --grep="Publish Version"
+$previousTag = git describe --tags --abbrev=0 --match "v[0-9]*"
+$changeLog = git log --pretty=format:"# %s%n%b" "$previousTag..HEAD" --invert-grep --grep="Publish Version"
 if (!$changeLog) {
     Write-Host "Changelog was empty, exiting"
     Exit 1

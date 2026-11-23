@@ -24,6 +24,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      IS_FORK: ${{ github.event.repository.fork }}
 
     steps:
       - name: Check Release Branch
@@ -68,7 +70,7 @@ jobs:
       - name: Bump Version
         id: bump_version
         if: inputs.release
-        run: ./release/bump-version.ps1
+        run: ./release/bump-version.ps1 -Revision:($env:IS_FORK -eq "true")
 
       - name: Download Dalamud
         run: |
@@ -104,7 +106,7 @@ jobs:
 
       - name: Finalize Release
         if: inputs.release
-        run: ./release/finalize-release.ps1 ${{ steps.bump_version.outputs.VERSION_STRING }}
+        run: ./release/finalize-release.ps1 ${{ steps.bump_version.outputs.VERSION_STRING }} ${{ github.repository }} -KeepListing:($env:IS_FORK -eq "true")
 
       - name: Push Release Tag
         if: inputs.release
@@ -117,7 +119,8 @@ jobs:
           VERSION_STRING: ${{ steps.bump_version.outputs.VERSION_STRING }}
         run: |
           Copy-Item .\FfxivVr\bin\x64\Release\FfxivVR\latest.zip FfxivVR.zip
-          gh release create $env:VERSION_STRING FfxivVR.zip --verify-tag --title "FFXIV VR $env:VERSION_STRING" --notes-file release/changelog.txt
+          $prerelease = if ($env:IS_FORK -eq "true") { @("--prerelease") } else { @() }
+          gh release create $env:VERSION_STRING FfxivVR.zip --verify-tag --title "FFXIV VR $env:VERSION_STRING" --notes-file release/changelog.txt @prerelease
 
       - name: Push Release to Master
         if: inputs.release
