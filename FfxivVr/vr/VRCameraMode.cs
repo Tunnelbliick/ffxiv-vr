@@ -40,6 +40,7 @@ public abstract class VRCameraMode
     }
     public virtual bool ShouldLockCameraVerticalRotation { get; } = false;
     public virtual bool UseHeadMovement { get; } = true;
+    public virtual bool AddsShakeOffset { get; } = false;
 }
 
 class OrbitCamera() : VRCameraMode
@@ -75,6 +76,8 @@ class FirstPersonCamera : VRCameraMode
         pos.Y += heightOffset;
         return pos;
     }
+
+    public override bool AddsShakeOffset { get; } = true;
 }
 
 class FollowingFirstPersonCamera : VRCameraMode
@@ -92,6 +95,8 @@ class FollowingFirstPersonCamera : VRCameraMode
         pos.Y += heightOffset;
         return pos;
     }
+
+    public override bool AddsShakeOffset { get; } = true;
 }
 class BodyTrackingCamera : FollowingFirstPersonCamera
 {

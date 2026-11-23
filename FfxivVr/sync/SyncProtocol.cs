@@ -14,6 +14,7 @@ public enum SyncRegions : byte
     Arms = 1,
     UpperBody = 2,
     Legs = 4,
+    Spine = 8,
 }
 
 public record SyncBone(string Name, SyncRegions Regions);
@@ -21,13 +22,15 @@ public record SyncBone(string Name, SyncRegions Regions);
 public static class SyncBones
 {
     private const SyncRegions Arm = SyncRegions.Arms | SyncRegions.UpperBody;
+    private const SyncRegions Torso = SyncRegions.UpperBody | SyncRegions.Spine;
+    public const SyncRegions Known = SyncRegions.Arms | SyncRegions.UpperBody | SyncRegions.Legs | SyncRegions.Spine;
 
     public static readonly SyncBone[] All = [
-        new(HumanBones.SpineA, SyncRegions.UpperBody),
-        new(HumanBones.SpineB, SyncRegions.UpperBody),
-        new(HumanBones.SpineC, SyncRegions.UpperBody),
-        new(HumanBones.Neck, SyncRegions.UpperBody),
-        new(HumanBones.ShoulderLeft, SyncRegions.UpperBody),
+        new(HumanBones.SpineA, Torso),
+        new(HumanBones.SpineB, Torso),
+        new(HumanBones.SpineC, Torso),
+        new(HumanBones.Neck, Torso),
+        new(HumanBones.ShoulderLeft, Torso),
         new(HumanBones.ArmLeft, Arm),
         new(HumanBones.ForearmLeft, Arm),
         new(HumanBones.HandLeft, Arm),
@@ -42,7 +45,7 @@ public static class SyncBones
         new(HumanBones.RingFingerLeftB, Arm),
         new(HumanBones.PinkyFingerLeftA, Arm),
         new(HumanBones.PinkyFingerLeftB, Arm),
-        new(HumanBones.ShoulderRight, SyncRegions.UpperBody),
+        new(HumanBones.ShoulderRight, Torso),
         new(HumanBones.ArmRight, Arm),
         new(HumanBones.ForearmRight, Arm),
         new(HumanBones.HandRight, Arm),
@@ -286,7 +289,7 @@ public static class SyncProtocol
         }
         var pose = new SyncedPose
         {
-            Regions = (SyncRegions)data[33] & (SyncRegions.Arms | SyncRegions.UpperBody | SyncRegions.Legs),
+            Regions = (SyncRegions)data[33] & SyncBones.Known,
         };
         var offset = PoseHeaderSize;
         if (hasHead)

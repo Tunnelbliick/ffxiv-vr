@@ -10,7 +10,8 @@ public class VRCamera(
 Configuration configuration,
 GameModifier gameModifier,
 GameState gameState,
-FirstPersonManager firstPersonManager
+FirstPersonManager firstPersonManager,
+CameraShake cameraShake
 )
 {
     private float near = 0.1f;
@@ -96,8 +97,17 @@ FirstPersonManager firstPersonManager
     internal Matrix4X4<float> ComputeGameViewMatrix(View view, VRCameraMode cameraMode, GameCamera gameCamera)
     {
         var cameraPosition = cameraMode.GetCameraPosition(gameCamera);
+        var shakeRotation = Matrix4X4<float>.Identity;
+        if (configuration.CameraShake > 0)
+        {
+            if (cameraMode.AddsShakeOffset)
+            {
+                cameraPosition += cameraShake.Offset * configuration.CameraShake;
+            }
+            shakeRotation = cameraShake.RollMatrix(configuration.CameraShake);
+        }
 
-        var gameViewMatrix = cameraMode.GetRotationMatrix(gameCamera) * Matrix4X4.CreateTranslation(cameraPosition);
+        var gameViewMatrix = shakeRotation * cameraMode.GetRotationMatrix(gameCamera) * Matrix4X4.CreateTranslation(cameraPosition);
         var scaledPosition = view.Pose.Position.ToVector3D() / configuration.WorldScale;
         var vrViewMatrix = Matrix4X4.CreateFromQuaternion(view.Pose.Orientation.ToQuaternion()) * Matrix4X4.CreateTranslation(scaledPosition);
 

@@ -83,8 +83,11 @@ public class Configuration : IPluginConfiguration
 
     public bool EnableDebug = false;
 
+    public float CameraShake = 1.0f;
+
     public bool SyncSharePose = false;
     public bool SyncShowOthers = false;
+    public bool SyncBodyLean = true;
     public string SyncServer = DefaultSyncServer;
     public const string DefaultSyncServer = "vr.tnnlb.dev:7850";
 

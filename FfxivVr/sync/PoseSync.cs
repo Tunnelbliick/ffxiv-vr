@@ -2,7 +2,6 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
-using Silk.NET.Maths;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -40,38 +39,25 @@ public unsafe class PoseSync(
 
     private bool IsEnabled => (configuration.SyncSharePose || configuration.SyncShowOthers) && configuration.SyncServer.Trim().Length > 0;
 
-    public void PublishLocalPose(SyncRegions regions, float cameraYRotation, Quaternion<float> hmdOrientation)
+    private bool IsSharingDue(double now) => configuration.SyncSharePose && IsEnabled && client.Token != 0 && room != 0 && now - lastPoseSent >= PoseIntervalSeconds;
+
+    public bool WantsLocalPose()
+    {
+        if (!IsSharingDue(Now) && !debugging.SyncLoopback)
+        {
+            return false;
+        }
+        return !gameState.IsGPosing() && !gameState.IsInCutscene();
+    }
+
+    public void PublishLocalPose(SyncedPose pose)
     {
         var now = Now;
-        var share = configuration.SyncSharePose && IsEnabled && client.Token != 0 && room != 0 && now - lastPoseSent >= PoseIntervalSeconds;
-        if (!share && !debugging.SyncLoopback)
-        {
-            return;
-        }
-        if (gameState.IsGPosing() || gameState.IsInCutscene())
-        {
-            return;
-        }
-        var characterBase = gameState.GetCharacterBase();
-        if (characterBase == null)
-        {
-            return;
-        }
-        var skeleton = characterBase->Skeleton;
-        if (skeleton == null)
-        {
-            return;
-        }
-        var head = SyncSkeletonModifier.ComputeHeadRotation(skeleton->Transform.Rotation.ToQuaternion(), cameraYRotation, hmdOrientation);
-        if (syncSkeletonModifier.Capture(skeleton, regions, head) is not { } pose)
-        {
-            return;
-        }
         if (debugging.SyncLoopback)
         {
             loopback.Receive(sequence, pose, now);
         }
-        if (share && LocalContentId() is { } contentId)
+        if (IsSharingDue(now) && LocalContentId() is { } contentId)
         {
             var length = SyncProtocol.WritePose(sendBuffer, client.Token, room, SyncProtocol.PlayerId(contentId, room), sequence, pose);
             client.Send(sendBuffer.AsSpan(0, length));

@@ -12,22 +12,28 @@ public unsafe class ControllerTrackingSkeletonModifier(
     {
         skeletonModifier.ResetPoseTree(pose, structure, HumanBones.ArmLeft, b => !b.Contains(HumanBones.WeaponBoneSubstring));
         skeletonModifier.ResetPoseTree(pose, structure, HumanBones.ArmRight, b => !b.Contains(HumanBones.WeaponBoneSubstring));
-        if (palmPose.LeftPalm is Posef leftController)
+        var (leftWrist, rightWrist) = GetWrists(palmPose);
+        if (leftWrist is Posef left)
         {
-            var wrist = ControllerToWrist(leftController, MathFactory.ZRotation(float.DegreesToRadians(90)));
-            skeletonModifier.UpdateArmIK(wrist, pose, structure, head, HumanBones.ArmLeft, HumanBones.ForearmLeft, HumanBones.HandLeft, skeletonRotation);
-            skeletonModifier.RotateHand(wrist, HumanBones.HandLeft, HumanBones.WristLeft, structure, pose, skeletonRotation);
+            skeletonModifier.UpdateArmIK(left, pose, structure, head, HumanBones.ArmLeft, HumanBones.ForearmLeft, HumanBones.HandLeft, skeletonRotation);
+            skeletonModifier.RotateHand(left, HumanBones.HandLeft, HumanBones.WristLeft, structure, pose, skeletonRotation);
         }
 
-        if (palmPose.RightPalm is Posef rightController)
+        if (rightWrist is Posef right)
         {
-            var wrist = ControllerToWrist(rightController, MathFactory.ZRotation(float.DegreesToRadians(-90)));
-            skeletonModifier.UpdateArmIK(wrist, pose, structure, head, HumanBones.ArmRight, HumanBones.ForearmRight, HumanBones.HandRight, skeletonRotation);
-            skeletonModifier.RotateHand(wrist, HumanBones.HandRight, HumanBones.WristRight, structure, pose, skeletonRotation);
+            skeletonModifier.UpdateArmIK(right, pose, structure, head, HumanBones.ArmRight, HumanBones.ForearmRight, HumanBones.HandRight, skeletonRotation);
+            skeletonModifier.RotateHand(right, HumanBones.HandRight, HumanBones.WristRight, structure, pose, skeletonRotation);
         }
     }
 
-    private Posef ControllerToWrist(Posef leftController, Quaternion<float> rotation)
+    internal static (Posef? left, Posef? right) GetWrists(PalmPose palmPose)
+    {
+        Posef? left = palmPose.LeftPalm is Posef leftController ? ControllerToWrist(leftController, MathFactory.ZRotation(float.DegreesToRadians(90))) : null;
+        Posef? right = palmPose.RightPalm is Posef rightController ? ControllerToWrist(rightController, MathFactory.ZRotation(float.DegreesToRadians(-90))) : null;
+        return (left, right);
+    }
+
+    private static Posef ControllerToWrist(Posef leftController, Quaternion<float> rotation)
     {
         var wristRotation = leftController.Orientation.ToQuaternion() * rotation;
         var wristPosition = leftController.Position.ToVector3D() - Vector3D.Transform(new Vector3D<float>(0, 0, -0.08f), wristRotation);

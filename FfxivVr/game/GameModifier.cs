@@ -1,8 +1,11 @@
 using Dalamud.Game.Gui.NamePlate;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
+using FFXIVClientStructs.Havok.Animation.Rig;
 using Silk.NET.Maths;
+using Silk.NET.OpenXR;
 using System.Collections.Generic;
 
 namespace FfxivVR;
@@ -15,9 +18,19 @@ public unsafe class GameModifier(
     HandTrackingSkeletonModifier handTrackingSkeletonModifier,
     ControllerTrackingSkeletonModifier controllerTrackingSkeletonModifier,
     Configuration configuration,
-    FirstPersonManager firstPersonManager
+    FirstPersonManager firstPersonManager,
+    SyncSkeletonModifier syncSkeletonModifier,
+    BodySolver bodySolver
 )
 {
+    private enum TrackingSource
+    {
+        None,
+        Body,
+        Hands,
+        Controllers,
+    }
+
     public void HideHeadMesh()
     {
         if (gameState.IsInCutscene())
@@ -95,45 +108,128 @@ public unsafe class GameModifier(
         return skeletonModifier.GetHeadPosition(skeleton);
     }
 
-    internal SyncRegions UpdateMotionControls(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation)
+    internal void UpdateMotionControls(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation)
     {
+        if (!TryGetTrackedSkeleton(cameraYRotation, out _, out var pose, out var structure, out var skeletonRotation, out var head))
+        {
+            return;
+        }
+        ApplyTracking(GetTrackingSource(vrInputData), vrInputData, runtimeAdjustments, pose, structure!, skeletonRotation, head);
+    }
+
+    internal SyncedPose? CaptureSyncPose(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation, Posef hmd, bool lean)
+    {
+        if (!TryGetTrackedSkeleton(cameraYRotation, out var skeleton, out var pose, out var structure, out var skeletonRotation, out var head))
+        {
+            return null;
+        }
+        var source = GetTrackingSource(vrInputData);
+        var regions = source switch
+        {
+            TrackingSource.Body => SyncRegions.UpperBody,
+            TrackingSource.Hands or TrackingSource.Controllers => SyncRegions.Arms,
+            _ => SyncRegions.None,
+        };
+        var hmdOrientation = hmd.Orientation.ToQuaternion();
+        var headRotation = SyncSkeletonModifier.ComputeHeadRotation(skeleton->Transform.Rotation.ToQuaternion(), cameraYRotation, hmdOrientation);
+        if (!lean || source == TrackingSource.Body)
+        {
+            return syncSkeletonModifier.Capture(skeleton, regions, headRotation);
+        }
+        var bones = bodySolver.GetTouchedBones(structure!);
+        var saved = BodySolver.SaveLocalTransforms(pose, bones);
+        var displacement = BodyIK.ClampLean(Vector3D.Transform(BodyIK.HeadDisplacement(hmd.Position.ToVector3D(), hmdOrientation), skeletonRotation));
+        var (leftWrist, rightWrist) = GetWrists(source, vrInputData);
+        Vector3D<float>? ToModel(Posef? wrist) => wrist is Posef w ? Vector3D.Transform(w.Position.ToVector3D(), skeletonRotation) + head : null;
+        bodySolver.Solve(pose, structure!, displacement, headRotation, ToModel(leftWrist), ToModel(rightWrist));
+        ApplyTracking(source, vrInputData, runtimeAdjustments, pose, structure!, skeletonRotation, head);
+        var synced = syncSkeletonModifier.Capture(skeleton, regions | SyncRegions.Spine, headRotation);
+        BodySolver.RestoreLocalTransforms(pose, bones, saved);
+        return synced;
+    }
+
+    private bool TryGetTrackedSkeleton(float cameraYRotation, out Skeleton* skeleton, out hkaPose* pose, out SkeletonStructure? structure, out Quaternion<float> skeletonRotation, out Vector3D<float> head)
+    {
+        skeleton = null;
+        pose = null;
+        structure = null;
+        skeletonRotation = Quaternion<float>.Identity;
+        head = default;
         var characterBase = gameState.GetCharacterBase();
         if (characterBase == null)
         {
-            return SyncRegions.None;
+            return false;
         }
-        var actorModel = gameState.GetCharacterBaseExtended();
-        var skeleton = characterBase->Skeleton;
-        var pose = SkeletonModifier.GetPose(skeleton);
+        skeleton = characterBase->Skeleton;
+        if (skeleton == null)
+        {
+            return false;
+        }
+        pose = SkeletonModifier.GetPose(skeleton);
         if (pose == null)
         {
-            return SyncRegions.None;
+            return false;
         }
-        if (skeletonModifier.GetSkeletonStructure(skeleton) is not { } structure)
+        structure = skeletonModifier.GetSkeletonStructure(skeleton);
+        if (structure == null)
         {
-            return SyncRegions.None;
+            return false;
         }
-        var skeletonRotation = MathFactory.YRotation(cameraYRotation) / skeleton->Transform.Rotation.ToQuaternion();
-        if (skeletonModifier.GetHeadPosition(skeleton) is not { } head)
+        skeletonRotation = MathFactory.YRotation(cameraYRotation) / skeleton->Transform.Rotation.ToQuaternion();
+        if (skeletonModifier.GetHeadPosition(skeleton) is not { } headPosition)
         {
-            return SyncRegions.None;
+            return false;
         }
-        if (configuration.BodyTracking && vrInputData.BodyJoints is { } bodyJoints)
+        head = headPosition;
+        return true;
+    }
+
+    private TrackingSource GetTrackingSource(VRInputData vrInputData)
+    {
+        if (configuration.BodyTracking && vrInputData.BodyJoints != null)
         {
-            bodySkeletonModifier.Apply(pose, structure, skeletonRotation, bodyJoints, vrInputData.HandPose);
-            return SyncRegions.UpperBody;
+            return TrackingSource.Body;
         }
-        else if (configuration.HandTracking && vrInputData.HandPose.HasData())
+        if (configuration.HandTracking && vrInputData.HandPose.HasData())
         {
-            handTrackingSkeletonModifier.Apply(pose, structure, skeletonRotation, head, vrInputData.HandPose, runtimeAdjustments);
-            return SyncRegions.Arms;
+            return TrackingSource.Hands;
         }
-        else if (configuration.ControllerTracking && vrInputData.PalmPose.HasData())
+        if (configuration.ControllerTracking && vrInputData.PalmPose.HasData())
         {
-            controllerTrackingSkeletonModifier.Apply(pose, structure, skeletonRotation, head, vrInputData.PalmPose);
-            return SyncRegions.Arms;
+            return TrackingSource.Controllers;
         }
-        return SyncRegions.None;
+        return TrackingSource.None;
+    }
+
+    private void ApplyTracking(TrackingSource source, VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, hkaPose* pose, SkeletonStructure structure, Quaternion<float> skeletonRotation, Vector3D<float> head)
+    {
+        switch (source)
+        {
+            case TrackingSource.Body:
+                bodySkeletonModifier.Apply(pose, structure, skeletonRotation, vrInputData.BodyJoints!, vrInputData.HandPose);
+                break;
+            case TrackingSource.Hands:
+                handTrackingSkeletonModifier.Apply(pose, structure, skeletonRotation, head, vrInputData.HandPose, runtimeAdjustments);
+                break;
+            case TrackingSource.Controllers:
+                controllerTrackingSkeletonModifier.Apply(pose, structure, skeletonRotation, head, vrInputData.PalmPose);
+                break;
+        }
+    }
+
+    private static (Posef? left, Posef? right) GetWrists(TrackingSource source, VRInputData vrInputData)
+    {
+        switch (source)
+        {
+            case TrackingSource.Hands:
+                return (
+                    vrInputData.HandPose.LeftHand is { } left ? left[(int)HandJointEXT.WristExt].Pose : null,
+                    vrInputData.HandPose.RightHand is { } right ? right[(int)HandJointEXT.WristExt].Pose : null);
+            case TrackingSource.Controllers:
+                return ControllerTrackingSkeletonModifier.GetWrists(vrInputData.PalmPose);
+            default:
+                return (null, null);
+        }
     }
 
     internal void ResetVerticalCameraRotation(float rotation)

@@ -11,14 +11,16 @@ public class DebugWindow : Window
 {
     private readonly Debugging debugging;
     private readonly GameState gameState;
+    private readonly CameraShake cameraShake;
 
-    public DebugWindow(Debugging debugging, GameState gameState) : base("FFXIV VR Debug")
+    public DebugWindow(Debugging debugging, GameState gameState, CameraShake cameraShake) : base("FFXIV VR Debug")
     {
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoResize;
         Size = new Vector2(450, 700);
         this.debugging = debugging;
         this.gameState = gameState;
+        this.cameraShake = cameraShake;
     }
 
     public override void Draw()
@@ -72,6 +74,9 @@ public class DebugWindow : Window
     }
     private unsafe void renderCustomData()
     {
+        ImGui.Text($"Shake look-at offset: {cameraShake.RawOffset.X:F3}, {cameraShake.RawOffset.Y:F3}, {cameraShake.RawOffset.Z:F3}");
+        ImGui.Text($"Shake offset: {cameraShake.Offset.Length:F3} (peak {cameraShake.PeakOffset:F3})");
+        ImGui.Text($"Shake roll: {float.RadiansToDegrees(cameraShake.RawRoll):F2}°, filtered {float.RadiansToDegrees(cameraShake.Roll):F2}° (peak {float.RadiansToDegrees(cameraShake.PeakRoll):F2}°)");
         var gameCamera = gameState.GetActiveCamera();
         var charBase = gameState.GetCharacterBaseExtended();
         var charOrGpose = gameState.getCharacterOrGpose();

@@ -3,7 +3,7 @@
     "Author": "Steelgunner90",
     "Name": "FFXIV VR (Pose Sync test)",
     "InternalName": "FfxivVR",
-    "AssemblyVersion": "0.0.85.1",
+    "AssemblyVersion": "0.0.85.2",
     "Description": "A VR mod for FFXIV. Run /vr to open settings. Test build with pose sync: other players with this build can see your VR head and hand movements (Sync tab).",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/Tunnelbliick/ffxiv-vr",
@@ -17,10 +17,10 @@
     "LoadPriority": 69420,
     "Punchline": "A VR mod for FFXIV, with pose sync",
     "AcceptsFeedback": true,
-    "Changelog": "# Add VR pose sync between plugin users",
-    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.1-sync/FfxivVR.zip",
-    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.1-sync/FfxivVR.zip",
-    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.1-sync/FfxivVR.zip",
-    "LastUpdated": 1795402782
+    "Changelog": "# Pose sync test build\n- Shared poses lean, bow and reach: your headset position bends the spine, the chest turns with your head and shoulders follow far reaches\n- Game screen shake now reaches the VR view (View tab: Camera shake)",
+    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.2-sync/FfxivVR.zip",
+    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.2-sync/FfxivVR.zip",
+    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.2-sync/FfxivVR.zip",
+    "LastUpdated": 1795412729
   }
 ]

@@ -52,6 +52,7 @@ public class ConfigWindow : Window
     {
         ImGui.TextWrapped("Lets other players with this plugin see your VR head, hand and finger movements, and lets you see theirs. Nothing is sent unless one of the boxes below is ticked.");
         Checkbox("Share my VR pose", ref config.SyncSharePose, "While first person motion tracking is active, sends your head, arm and finger rotations to the sync server, tagged with a hashed character id and a hashed zone id.");
+        Checkbox("Share body lean", ref config.SyncBodyLean, "Bends your shared spine and shoulders to follow where your head is and how far you reach, so others see you lean, bow and reach instead of only turning your head. Your own view and body are unchanged.");
         Checkbox("Show other players' VR poses", ref config.SyncShowOthers, "Works without VR. Applies poses shared by nearby players to their characters.");
         ImGui.Text("Server");
         var server = config.SyncServer;
@@ -144,6 +145,7 @@ public class ConfigWindow : Window
         ComboDropdown("Switch View Mode when Entering Combat", ["Disabled", "First Person", "Third Person"], ref config.AutoCombatViewMode);
         Slider("World Scale", ref config.WorldScale);
         Slider("Gamma", ref config.Gamma, defaultValue: 2.2f);
+        Slider("Camera shake", ref config.CameraShake, defaultValue: 1, min: 0, max: 1, help: "How much of the game's screen shake reaches your view. 0 turns it off.");
     }
 
     private void GeneralTab()

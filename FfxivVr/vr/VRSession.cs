@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Input;
 using Silk.NET.Maths;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using CSRay = FFXIVClientStructs.FFXIV.Client.Graphics.Ray;
 
@@ -36,7 +37,8 @@ public unsafe class VRSession(
     Debugging debugging,
     ITargetManager targetManager,
     NameplateModifier nameplateModifier,
-    PoseSync poseSync
+    PoseSync poseSync,
+    CameraShake cameraShake
 )
 {
     public void Initialize()
@@ -79,6 +81,10 @@ public unsafe class VRSession(
             var centerView = vrCamera.ComputeCenterView(phase.Views[Eye.Left.ToIndex()], phase.Views[Eye.Right.ToIndex()]);
             firstPersonManager.UpdateRotation(centerView.Pose.Orientation.ToQuaternion().GetYaw());
         }
+        if (camera->RenderCamera != null)
+        {
+            cameraShake.Update(camera->LookAtVector.ToVector3D(), gameState.GetFixedHeadPosition(), camera->RenderCamera->ViewMatrix.ToMatrix4X4(), Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
+        }
         renderStrategy.UpdateCamera(camera);
     }
 
@@ -106,12 +112,21 @@ public unsafe class VRSession(
             {
                 return;
             }
-            var regions = gameModifier.UpdateMotionControls(
+            gameModifier.UpdateMotionControls(
                 phase.VRInputData,
                 vrSystem.RuntimeAdjustments,
                 gameCamera.GetYRotation());
-            var centerView = vrCamera.ComputeCenterView(phase.Views[Eye.Left.ToIndex()], phase.Views[Eye.Right.ToIndex()]);
-            poseSync.PublishLocalPose(regions, gameCamera.GetYRotation(), centerView.Pose.Orientation.ToQuaternion());
+            if (poseSync.WantsLocalPose())
+            {
+                var left = phase.Views[Eye.Left.ToIndex()];
+                var right = phase.Views[Eye.Right.ToIndex()];
+                var eyeCenter = (left.Pose.Position.ToVector3D() + right.Pose.Position.ToVector3D()) / 2;
+                var hmd = new Silk.NET.OpenXR.Posef(vrCamera.ComputeCenterView(left, right).Pose.Orientation, eyeCenter.ToVector3f());
+                if (gameModifier.CaptureSyncPose(phase.VRInputData, vrSystem.RuntimeAdjustments, gameCamera.GetYRotation(), hmd, configuration.SyncBodyLean) is { } pose)
+                {
+                    poseSync.PublishLocalPose(pose);
+                }
+            }
         }
     }
 
