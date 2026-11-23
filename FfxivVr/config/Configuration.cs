@@ -84,6 +84,8 @@ public class Configuration : IPluginConfiguration
     public bool EnableDebug = false;
 
     public float CameraShake = 1.0f;
+    public bool SeatedPlay = false;
+    public bool ThirdPersonMotionTracking = true;
 
     public bool SyncSharePose = false;
     public bool SyncShowOthers = false;

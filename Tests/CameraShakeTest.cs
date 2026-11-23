@@ -85,6 +85,26 @@ public class CameraShakeTests
     }
 
     [Test]
+    public void BadFramesDoNotStick()
+    {
+        var shake = new CameraShake();
+        var anchor = new Vector3D<float>(0, 1.6f, 0);
+        var view = RolledView(0);
+        var nan = new Matrix4X4<float>(float.NaN, 0, 0, 0, 0, float.NaN, 0, 0, 0, 0, float.NaN, 0, 0, 0, 0, 1);
+        shake.Update(anchor, anchor, view, 0);
+        shake.Update(anchor + new Vector3D<float>(float.NaN, 0, 0), anchor, nan, 0.011);
+        Assert.That(shake.Offset, Is.EqualTo(Vector3D<float>.Zero));
+        Assert.That(shake.Roll, Is.EqualTo(0));
+        for (int frame = 2; frame < 10; frame++)
+        {
+            shake.Update(anchor, anchor, view, frame * 0.011);
+            Assert.That(float.IsFinite(shake.Offset.X) && float.IsFinite(shake.Roll), Is.True);
+        }
+        Assert.That(CameraShake.ExtractRoll(nan), Is.EqualTo(0));
+        Assert.That(CameraShake.ExtractRoll(default), Is.EqualTo(0));
+    }
+
+    [Test]
     public void OffsetIsClamped()
     {
         var shake = new CameraShake();

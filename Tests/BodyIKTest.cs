@@ -85,12 +85,19 @@ public class BodyIKTests
     [Test]
     public void LeanIsClamped()
     {
-        var clamped = BodyIK.ClampLean(new Vector3D<float>(1, 1, 1));
+        var clamped = BodyIK.ClampLean(new Vector3D<float>(1, 1, 1), false);
         Assert.That(new Vector3D<float>(clamped.X, 0, clamped.Z).Length, Is.EqualTo(BodyIK.MaxHorizontalLean).Within(1E-5f));
         Assert.That(clamped.Y, Is.EqualTo(BodyIK.MaxRise));
-        Assert.That(BodyIK.ClampLean(new Vector3D<float>(0, -2, 0)).Y, Is.EqualTo(-BodyIK.MaxDrop));
+        Assert.That(BodyIK.ClampLean(new Vector3D<float>(0, -2, 0), false).Y, Is.EqualTo(-BodyIK.MaxDrop));
         var small = new Vector3D<float>(0.1f, -0.1f, 0.05f);
-        Assert.That(BodyIK.ClampLean(small), Is.EqualTo(small));
+        Assert.That(BodyIK.ClampLean(small, false), Is.EqualTo(small));
+    }
+
+    [Test]
+    public void SeatedLeanIgnoresHeight()
+    {
+        var slouched = BodyIK.ClampLean(new Vector3D<float>(0.1f, -0.4f, 0.2f), true);
+        Assert.That(slouched, Is.EqualTo(new Vector3D<float>(0.1f, 0, 0.2f)));
     }
 
     [Test]

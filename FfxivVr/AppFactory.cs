@@ -102,6 +102,7 @@ public unsafe class AppFactory
         builder.Services.AddSingleton<Transitions>();
         builder.Services.AddSingleton<VRLifecycle>();
         builder.Services.AddSingleton<VRStartStop>();
+        builder.Services.AddSingleton<SteamVRLauncher>();
         builder.Services.AddSingleton<InverseKinematics>();
         builder.Services.AddSingleton<SyncSkeletonModifier>();
         builder.Services.AddSingleton<BodySolver>();

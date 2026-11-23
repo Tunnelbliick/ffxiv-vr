@@ -25,7 +25,7 @@ public static class BodyIK
         return eyeCenter - Vector3D.Transform(EyeOffset, hmdOrientation) + EyeOffset;
     }
 
-    public static Vector3D<float> ClampLean(Vector3D<float> displacement)
+    public static Vector3D<float> ClampLean(Vector3D<float> displacement, bool seated)
     {
         var horizontal = new Vector3D<float>(displacement.X, 0, displacement.Z);
         var length = horizontal.Length;
@@ -33,7 +33,8 @@ public static class BodyIK
         {
             horizontal *= MaxHorizontalLean / length;
         }
-        return horizontal + new Vector3D<float>(0, Math.Clamp(displacement.Y, -MaxDrop, MaxRise), 0);
+        var vertical = seated ? 0 : Math.Clamp(displacement.Y, -MaxDrop, MaxRise);
+        return horizontal + new Vector3D<float>(0, vertical, 0);
     }
 
     public static Quaternion<float>[] SolveSpine(ReadOnlySpan<Vector3D<float>> joints, Vector3D<float> end, Vector3D<float> endOffset, Vector3D<float> target, float yaw)

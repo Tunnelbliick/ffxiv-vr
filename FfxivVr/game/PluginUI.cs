@@ -52,7 +52,7 @@ public class PluginUI(
         {
             try
             {
-                vrStartStop.StartVR();
+                vrStartStop.StartVR(launchSteamVR: false);
             }
             catch (VRSystem.FormFactorUnavailableException)
             {

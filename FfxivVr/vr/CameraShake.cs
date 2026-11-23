@@ -25,11 +25,18 @@ public class CameraShake
 
     public void Update(Vector3D<float> lookAt, Vector3D<float> anchor, Matrix4X4<float> gameView, double now)
     {
-        var dt = lastUpdate is double last ? now - last : double.PositiveInfinity;
-        lastUpdate = now;
         RawOffset = lookAt - anchor;
         RawRoll = ExtractRoll(gameView);
-        if (dt > MaxStep || dt < 0 || (RawOffset - offsetAverage).Length > ResetDistance)
+        if (!IsFinite(RawOffset) || !float.IsFinite(RawRoll))
+        {
+            lastUpdate = null;
+            Offset = Vector3D<float>.Zero;
+            Roll = 0;
+            return;
+        }
+        var dt = lastUpdate is double last ? now - last : double.PositiveInfinity;
+        lastUpdate = now;
+        if (dt > MaxStep || dt < 0 || !IsFinite(offsetAverage) || !float.IsFinite(rollAverage) || (RawOffset - offsetAverage).Length > ResetDistance)
         {
             offsetAverage = RawOffset;
             rollAverage = RawRoll;
@@ -69,8 +76,19 @@ public class CameraShake
         }
         levelRight = Vector3D.Normalize(levelRight);
         var levelUp = Vector3D.Cross(levelRight, forward);
-        up = Vector3D.Normalize(up - forward * Vector3D.Dot(up, forward));
-        return MathF.Atan2(Vector3D.Dot(Vector3D.Cross(levelUp, up), forward), Vector3D.Dot(levelUp, up));
+        up -= forward * Vector3D.Dot(up, forward);
+        if (up.Length < 1E-6f)
+        {
+            return 0;
+        }
+        up = Vector3D.Normalize(up);
+        var roll = MathF.Atan2(Vector3D.Dot(Vector3D.Cross(levelUp, up), forward), Vector3D.Dot(levelUp, up));
+        return float.IsFinite(roll) ? roll : 0;
+    }
+
+    private static bool IsFinite(Vector3D<float> vector)
+    {
+        return float.IsFinite(vector.X) && float.IsFinite(vector.Y) && float.IsFinite(vector.Z);
     }
 
     public Matrix4X4<float> RollMatrix(float strength)

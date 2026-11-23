@@ -41,6 +41,8 @@ public unsafe class VRSession(
     CameraShake cameraShake
 )
 {
+    private readonly BodyYaw bodyYaw = new();
+
     public void Initialize()
     {
         dalamudRenderer.Initialize();
@@ -101,33 +103,42 @@ public unsafe class VRSession(
         }
         gameModifier.HideHeadMesh();
 
-        if (renderStrategy.VRSessionData is VRSessionData phase && EnableMotionTracking())
+        if (renderStrategy.VRSessionData is not VRSessionData phase)
         {
-            var camera = gameState.GetCurrentCamera();
-            var position = camera->Position.ToVector3D();
-            var lookAt = camera->LookAtVector.ToVector3D();
-
-            var gameCamera = phase.GetGameCamera(vrCamera.CreateGameCamera);
-            if (gameCamera == null)
+            return;
+        }
+        var gameCamera = phase.GetGameCamera(vrCamera.CreateGameCamera);
+        if (gameCamera == null)
+        {
+            return;
+        }
+        var left = phase.Views[Eye.Left.ToIndex()];
+        var right = phase.Views[Eye.Right.ToIndex()];
+        var hmdOrientation = vrCamera.ComputeCenterView(left, right).Pose.Orientation;
+        var trackingYaw = TrackingYaw(gameCamera, hmdOrientation.ToQuaternion());
+        if (EnableMotionTracking())
+        {
+            gameModifier.UpdateMotionControls(phase.VRInputData, vrSystem.RuntimeAdjustments, trackingYaw);
+        }
+        if (TrackingAllowed() && poseSync.WantsLocalPose())
+        {
+            var eyeCenter = (left.Pose.Position.ToVector3D() + right.Pose.Position.ToVector3D()) / 2;
+            var hmd = new Silk.NET.OpenXR.Posef(hmdOrientation, eyeCenter.ToVector3f());
+            if (gameModifier.CaptureSyncPose(phase.VRInputData, vrSystem.RuntimeAdjustments, trackingYaw, hmd, configuration.SyncBodyLean, configuration.SeatedPlay) is { } pose)
             {
-                return;
-            }
-            gameModifier.UpdateMotionControls(
-                phase.VRInputData,
-                vrSystem.RuntimeAdjustments,
-                gameCamera.GetYRotation());
-            if (poseSync.WantsLocalPose())
-            {
-                var left = phase.Views[Eye.Left.ToIndex()];
-                var right = phase.Views[Eye.Right.ToIndex()];
-                var eyeCenter = (left.Pose.Position.ToVector3D() + right.Pose.Position.ToVector3D()) / 2;
-                var hmd = new Silk.NET.OpenXR.Posef(vrCamera.ComputeCenterView(left, right).Pose.Orientation, eyeCenter.ToVector3f());
-                if (gameModifier.CaptureSyncPose(phase.VRInputData, vrSystem.RuntimeAdjustments, gameCamera.GetYRotation(), hmd, configuration.SyncBodyLean) is { } pose)
-                {
-                    poseSync.PublishLocalPose(pose);
-                }
+                poseSync.PublishLocalPose(pose);
             }
         }
+    }
+
+    private float TrackingYaw(GameCamera gameCamera, Quaternion<float> hmdOrientation)
+    {
+        var body = bodyYaw.Update(hmdOrientation, configuration.SeatedPlay, Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
+        if (!firstPersonManager.IsFirstPerson && gameModifier.ThirdPersonTrackingYaw(body) is float thirdPerson)
+        {
+            return thirdPerson;
+        }
+        return gameCamera.GetYRotation();
     }
 
     private bool EnableMotionTracking()
@@ -136,7 +147,12 @@ public unsafe class VRSession(
         {
             return true;
         }
-        return firstPersonManager.IsFirstPerson && (!configuration.DisableMotionTrackingInCombat || !Conditions.Instance()->InCombat);
+        return (firstPersonManager.IsFirstPerson || configuration.ThirdPersonMotionTracking) && TrackingAllowed();
+    }
+
+    private bool TrackingAllowed()
+    {
+        return debugging.AlwaysMotionControls || !configuration.DisableMotionTrackingInCombat || !Conditions.Instance()->InCombat;
     }
 
     public void OnStartUI()

@@ -107,6 +107,7 @@ public class ConfigWindow : Window
         Checkbox("Keep the camera level", ref config.KeepCameraHorizontal);
         Checkbox("Keep the cutscene camera level", ref config.KeepCutsceneCameraHorizontal, "Disable to ensure camera looks at the original cutscene direction.");
         Checkbox("Prevent camera from changing flying height", ref config.DisableCameraDirectionFlyingThirdPerson);
+        Checkbox("Motion tracking in third person", ref config.ThirdPersonMotionTracking, "Your character's arms follow your hands in third person too. Your hands are placed relative to your body, not the camera, so they stay correct when you look at your character from the front.");
     }
 
     private void FirstPersonTab()
@@ -146,6 +147,7 @@ public class ConfigWindow : Window
         Slider("World Scale", ref config.WorldScale);
         Slider("Gamma", ref config.Gamma, defaultValue: 2.2f);
         Slider("Camera shake", ref config.CameraShake, defaultValue: 1, min: 0, max: 1, help: "How much of the game's screen shake reaches your view. 0 turns it off.");
+        Checkbox("Seated play", ref config.SeatedPlay, "For playing sitting down. Your character keeps standing at full height: sitting low or slouching isn't read as crouching, and the direction you faced when you last recentered stays your body's forward, so turning your head in third person turns only your character's head.");
     }
 
     private void GeneralTab()

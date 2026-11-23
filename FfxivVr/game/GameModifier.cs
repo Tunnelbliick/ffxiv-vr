@@ -117,7 +117,17 @@ public unsafe class GameModifier(
         ApplyTracking(GetTrackingSource(vrInputData), vrInputData, runtimeAdjustments, pose, structure!, skeletonRotation, head);
     }
 
-    internal SyncedPose? CaptureSyncPose(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation, Posef hmd, bool lean)
+    internal float? ThirdPersonTrackingYaw(float bodyYaw)
+    {
+        var characterBase = gameState.GetCharacterBase();
+        if (characterBase == null || characterBase->Skeleton == null)
+        {
+            return null;
+        }
+        return BodyYaw.ThirdPersonTrackingYaw(characterBase->Skeleton->Transform.Rotation.ToQuaternion(), bodyYaw);
+    }
+
+    internal SyncedPose? CaptureSyncPose(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation, Posef hmd, bool lean, bool seated)
     {
         if (!TryGetTrackedSkeleton(cameraYRotation, out var skeleton, out var pose, out var structure, out var skeletonRotation, out var head))
         {
@@ -138,7 +148,7 @@ public unsafe class GameModifier(
         }
         var bones = bodySolver.GetTouchedBones(structure!);
         var saved = BodySolver.SaveLocalTransforms(pose, bones);
-        var displacement = BodyIK.ClampLean(Vector3D.Transform(BodyIK.HeadDisplacement(hmd.Position.ToVector3D(), hmdOrientation), skeletonRotation));
+        var displacement = BodyIK.ClampLean(Vector3D.Transform(BodyIK.HeadDisplacement(hmd.Position.ToVector3D(), hmdOrientation), skeletonRotation), seated);
         var (leftWrist, rightWrist) = GetWrists(source, vrInputData);
         Vector3D<float>? ToModel(Posef? wrist) => wrist is Posef w ? Vector3D.Transform(w.Position.ToVector3D(), skeletonRotation) + head : null;
         bodySolver.Solve(pose, structure!, displacement, headRotation, ToModel(leftWrist), ToModel(rightWrist));
