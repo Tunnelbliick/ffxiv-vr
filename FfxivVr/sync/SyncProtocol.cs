@@ -104,7 +104,8 @@ public static class SyncProtocol
     public const int HeaderSize = 4;
     public const int TokenOffset = 4;
     public const int KeepaliveSize = 20;
-    public const int WelcomeSize = 12;
+    public const int WelcomeSize = 14;
+    public const int LegacyWelcomeSize = 12;
     public const int PoseHeaderSize = 42;
 
     private const byte HeadFlag = 1;
@@ -215,21 +216,27 @@ public static class SyncProtocol
         return KeepaliveSize;
     }
 
-    public static int WriteWelcome(Span<byte> buffer, ulong token)
+    public static int WriteWelcome(Span<byte> buffer, ulong token, int roomPeers)
     {
         WriteHeader(buffer, SyncPacketType.Welcome);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[4..], token);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer[12..], (ushort)Math.Clamp(roomPeers, 0, ushort.MaxValue));
         return WelcomeSize;
     }
 
-    public static bool TryReadWelcome(ReadOnlySpan<byte> data, out ulong token)
+    public static bool TryReadWelcome(ReadOnlySpan<byte> data, out ulong token, out int? roomPeers)
     {
         token = 0;
-        if (ReadType(data) != SyncPacketType.Welcome || data.Length < WelcomeSize)
+        roomPeers = null;
+        if (ReadType(data) != SyncPacketType.Welcome || data.Length < LegacyWelcomeSize)
         {
             return false;
         }
         token = BinaryPrimitives.ReadUInt64LittleEndian(data[4..]);
+        if (data.Length >= WelcomeSize)
+        {
+            roomPeers = BinaryPrimitives.ReadUInt16LittleEndian(data[12..]);
+        }
         return true;
     }
 

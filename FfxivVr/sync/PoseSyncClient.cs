@@ -33,8 +33,11 @@ public class PoseSyncClient(Logger logger) : IDisposable
     private long token;
     private volatile bool unreachable;
     private volatile bool invalidAddress;
+    private volatile int roomPeers = -1;
 
     public ulong Token => (ulong)Interlocked.Read(ref token);
+
+    public int? RoomPeers => roomPeers >= 0 ? roomPeers : null;
 
     public PoseSyncStatus Status
     {
@@ -114,6 +117,7 @@ public class PoseSyncClient(Logger logger) : IDisposable
         address = null;
         Interlocked.Exchange(ref token, 0);
         Interlocked.Exchange(ref lastWelcome, 0);
+        roomPeers = -1;
         Incoming.Clear();
     }
 
@@ -213,8 +217,9 @@ public class PoseSyncClient(Logger logger) : IDisposable
             }
             unreachable = false;
             var data = buffer.AsSpan(0, length);
-            if (SyncProtocol.TryReadWelcome(data, out var welcomeToken))
+            if (SyncProtocol.TryReadWelcome(data, out var welcomeToken, out var peers))
             {
+                roomPeers = peers ?? -1;
                 Interlocked.Exchange(ref token, (long)welcomeToken);
                 Interlocked.Exchange(ref lastWelcome, Stopwatch.GetTimestamp());
             }

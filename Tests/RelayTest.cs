@@ -51,7 +51,7 @@ public class RelayTests
 
         Assert.That(sent, Has.Count.EqualTo(1));
         Assert.That(sent[0].to, Is.EqualTo(Alice));
-        Assert.That(SyncProtocol.TryReadWelcome(sent[0].data, out var token), Is.True);
+        Assert.That(SyncProtocol.TryReadWelcome(sent[0].data, out var token, out _), Is.True);
         Assert.That(token, Is.EqualTo(relay.TokenFor(Alice)));
         Assert.That(relay.ClientCount, Is.EqualTo(0));
     }
@@ -83,7 +83,7 @@ public class RelayTests
 
         Assert.That(sent, Has.Count.EqualTo(1));
         Assert.That(sent[0].to, Is.EqualTo(Alice));
-        Assert.That(SyncProtocol.TryReadWelcome(sent[0].data, out _), Is.True);
+        Assert.That(SyncProtocol.TryReadWelcome(sent[0].data, out _, out _), Is.True);
     }
 
     [Test]
@@ -116,6 +116,28 @@ public class RelayTests
         }
 
         Assert.That(sent.Count, Is.LessThan(Relay.MaxPacketsPerSecond));
+    }
+
+    [Test]
+    public void WelcomeCountsTheOtherClientsInTheRoom()
+    {
+        Join(Alice, room: 1);
+        Join(Bob, room: 1);
+        Join(Carol, room: 2);
+        sent.Clear();
+
+        Join(Alice, room: 1);
+        Assert.That(SyncProtocol.TryReadWelcome(sent[^1].data, out _, out var alicePeers), Is.True);
+        Assert.That(alicePeers, Is.EqualTo(1));
+
+        Join(Carol, room: 2);
+        Assert.That(SyncProtocol.TryReadWelcome(sent[^1].data, out _, out var carolPeers), Is.True);
+        Assert.That(carolPeers, Is.EqualTo(0));
+
+        Join(Carol, room: 1);
+        Join(Alice, room: 1);
+        Assert.That(SyncProtocol.TryReadWelcome(sent[^1].data, out _, out var afterMove), Is.True);
+        Assert.That(afterMove, Is.EqualTo(2));
     }
 
     [Test]

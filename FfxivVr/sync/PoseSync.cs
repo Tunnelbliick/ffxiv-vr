@@ -34,6 +34,7 @@ public unsafe class PoseSync(
 
     public int ActivePlayers { get; private set; }
     public PoseSyncStatus Status => client.Status;
+    public int? PluginUsersInZone => Status == PoseSyncStatus.Connected ? client.RoomPeers : null;
 
     private static double Now => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
 

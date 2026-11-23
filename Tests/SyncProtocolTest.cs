@@ -11,6 +11,22 @@ public class SyncProtocolTests
     }
 
     [Test]
+    public void WelcomeCarriesTheRoomPeersAndOldRelaysStillWork()
+    {
+        var buffer = new byte[SyncProtocol.WelcomeSize];
+        var length = SyncProtocol.WriteWelcome(buffer, 42, 3);
+        Assert.That(SyncProtocol.TryReadWelcome(buffer.AsSpan(0, length), out var token, out var peers), Is.True);
+        Assert.That(token, Is.EqualTo(42UL));
+        Assert.That(peers, Is.EqualTo(3));
+
+        Assert.That(SyncProtocol.TryReadWelcome(buffer.AsSpan(0, SyncProtocol.LegacyWelcomeSize), out var legacyToken, out var legacyPeers), Is.True);
+        Assert.That(legacyToken, Is.EqualTo(42UL));
+        Assert.That(legacyPeers, Is.Null);
+
+        Assert.That(SyncProtocol.TryReadWelcome(buffer.AsSpan(0, SyncProtocol.LegacyWelcomeSize - 1), out _, out _), Is.False);
+    }
+
+    [Test]
     public void PackedQuaternionsRoundTrip()
     {
         var random = new Random(1234);

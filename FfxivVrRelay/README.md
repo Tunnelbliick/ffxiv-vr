@@ -6,6 +6,7 @@ A small UDP relay that forwards VR pose packets between FFXIV VR plugin users in
 
 - Clients send a keepalive every second and pose packets about 30 times a second.
 - The relay answers keepalives with a token derived from the client's IP and port (HMAC with a random secret made at startup). Pose packets are only forwarded when they carry the sender's own token, so spoofed source addresses can't be used to flood someone.
+- Each keepalive reply also carries how many other clients are in the sender's room, which the plugin shows in its Sync tab as plugin users in the zone. Older plugins ignore the extra bytes.
 - Packets are forwarded only to clients in the same room. A room is a hash of world, zone, instance and housing ward; player ids are hashes of the character's content id salted with the room. The relay never sees raw content ids or names.
 - Limits: 512-byte packets, 60 packets per second per client, 64 clients per room, 5000 clients total, clients dropped after 15 seconds of silence.
 - Nothing is written to disk. Once a minute it logs the client and room counts.

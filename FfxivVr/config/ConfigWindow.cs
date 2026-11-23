@@ -51,7 +51,7 @@ public class ConfigWindow : Window
     private void SyncTab()
     {
         ImGui.TextWrapped("Lets other players with this plugin see your VR head, hand and finger movements, and lets you see theirs. Nothing is sent unless one of the boxes below is ticked.");
-        Checkbox("Share my VR pose", ref config.SyncSharePose, "While first person motion tracking is active, sends your head, arm and finger rotations to the sync server, tagged with a hashed character id and a hashed zone id.");
+        Checkbox("Share my VR pose", ref config.SyncSharePose, "While VR is running, in first or third person, sends your head, arm and finger rotations to the sync server, tagged with a hashed character id and a hashed zone id.");
         Checkbox("Share body lean", ref config.SyncBodyLean, "Bends your shared spine and shoulders to follow where your head is and how far you reach, so others see you lean, bow and reach instead of only turning your head. Your own view and body are unchanged.");
         Checkbox("Show other players' VR poses", ref config.SyncShowOthers, "Works without VR. Applies poses shared by nearby players to their characters.");
         ImGui.Text("Server");
@@ -77,7 +77,13 @@ public class ConfigWindow : Window
             _ => "",
         };
         ImGui.Text($"Status: {status}");
-        ImGui.Text($"Synced players nearby: {poseSync.ActivePlayers}");
+        ImGui.Text($"VR poses shown nearby: {poseSync.ActivePlayers}");
+        if (poseSync.Status == PoseSyncStatus.Connected)
+        {
+            ImGui.Text(poseSync.PluginUsersInZone is int users
+                ? $"Other plugin users in this zone: {users}"
+                : "Other plugin users in this zone: unknown (the sync server needs an update)");
+        }
     }
 
     public override void Draw()

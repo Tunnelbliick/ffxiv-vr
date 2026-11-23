@@ -14,7 +14,7 @@ public sealed class Relay
     public const byte PoseType = 2;
     public const byte WelcomeType = 3;
     public const int KeepaliveSize = 20;
-    public const int WelcomeSize = 12;
+    public const int WelcomeSize = 14;
     public const int PoseHeaderSize = 42;
     public const int MaxPacketSize = 512;
     public const int MaxClients = 5000;
@@ -74,11 +74,12 @@ public sealed class Relay
     private void HandleKeepalive(ReadOnlySpan<byte> data, IPEndPoint from, long now, Sender send)
     {
         var expected = TokenFor(from);
-        SendWelcome(from, expected, send);
+        var room = ReadRoom(data);
         if (ReadToken(data) == expected)
         {
-            Touch(from, ReadRoom(data), now);
+            Touch(from, room, now);
         }
+        SendWelcome(from, expected, OthersIn(room, from), send);
     }
 
     private void HandlePose(ReadOnlySpan<byte> data, IPEndPoint from, long now, Sender send)
@@ -86,7 +87,7 @@ public sealed class Relay
         var expected = TokenFor(from);
         if (ReadToken(data) != expected)
         {
-            SendWelcome(from, expected, send);
+            SendWelcome(from, expected, OthersIn(ReadRoom(data), from), send);
             return;
         }
         var room = ReadRoom(data);
@@ -106,13 +107,23 @@ public sealed class Relay
         }
     }
 
-    private static void SendWelcome(IPEndPoint to, ulong token, Sender send)
+    private int OthersIn(ulong room, IPEndPoint endpoint)
+    {
+        if (!rooms.TryGetValue(room, out var members))
+        {
+            return 0;
+        }
+        return members.Count - (members.Contains(endpoint) ? 1 : 0);
+    }
+
+    private static void SendWelcome(IPEndPoint to, ulong token, int others, Sender send)
     {
         Span<byte> welcome = stackalloc byte[WelcomeSize];
         BinaryPrimitives.WriteUInt16LittleEndian(welcome, Magic);
         welcome[2] = Version;
         welcome[3] = WelcomeType;
         BinaryPrimitives.WriteUInt64LittleEndian(welcome[4..], token);
+        BinaryPrimitives.WriteUInt16LittleEndian(welcome[12..], (ushort)Math.Min(others, ushort.MaxValue));
         send(welcome, to);
     }
 
