@@ -1,12 +1,12 @@
 [
   {
     "Author": "Steelgunner90",
-    "Name": "FFXIV VR",
+    "Name": "FFXIV VR (Pose Sync test)",
     "InternalName": "FfxivVR",
-    "AssemblyVersion": "0.0.85.0",
-    "Description": "A VR mod for FFXIV. Run /vr to open settings",
+    "AssemblyVersion": "0.0.85.1",
+    "Description": "A VR mod for FFXIV. Run /vr to open settings. Test build with pose sync: other players with this build can see your VR head and hand movements (Sync tab).",
     "ApplicableVersion": "any",
-    "RepoUrl": "https://github.com/WesleyLuk90/ffxiv-vr",
+    "RepoUrl": "https://github.com/Tunnelbliick/ffxiv-vr",
     "Tags": [
       "vr"
     ],
@@ -15,12 +15,12 @@
     "LoadSync": true,
     "CanUnloadAsync": true,
     "LoadPriority": 69420,
-    "Punchline": "A VR mod for FFXIV",
+    "Punchline": "A VR mod for FFXIV, with pose sync",
     "AcceptsFeedback": true,
-    "Changelog": "# Report why the SteamVR startup DXGI hook is missing (#170)",
-    "DownloadLinkInstall": "https://github.com/WesleyLuk90/ffxiv-vr/releases/download/v0.0.85/FfxivVR.zip",
-    "DownloadLinkTesting": "https://github.com/WesleyLuk90/ffxiv-vr/releases/download/v0.0.85/FfxivVR.zip",
-    "DownloadLinkUpdate": "https://github.com/WesleyLuk90/ffxiv-vr/releases/download/v0.0.85/FfxivVR.zip",
-    "LastUpdated": 1794381479
+    "Changelog": "# Add VR pose sync between plugin users",
+    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.1-sync/FfxivVR.zip",
+    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.1-sync/FfxivVR.zip",
+    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.1-sync/FfxivVR.zip",
+    "LastUpdated": 1795402782
   }
 ]
