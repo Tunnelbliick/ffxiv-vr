@@ -119,8 +119,8 @@ jobs:
           VERSION_STRING: ${{ steps.bump_version.outputs.VERSION_STRING }}
         run: |
           Copy-Item .\FfxivVr\bin\x64\Release\FfxivVR\latest.zip FfxivVR.zip
-          $prerelease = if ($env:IS_FORK -eq "true") { @("--prerelease") } else { @() }
-          gh release create $env:VERSION_STRING FfxivVR.zip --verify-tag --title "FFXIV VR $env:VERSION_STRING" --notes-file release/changelog.txt @prerelease
+          $prerelease = if ($env:IS_FORK -eq "true") { "true" } else { "false" }
+          gh release create $env:VERSION_STRING FfxivVR.zip --verify-tag --title "FFXIV VR $env:VERSION_STRING" --notes-file release/changelog.txt --prerelease=$prerelease
 
       - name: Push Release to Master
         if: inputs.release
