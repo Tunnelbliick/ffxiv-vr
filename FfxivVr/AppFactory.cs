@@ -103,6 +103,9 @@ public unsafe class AppFactory
         builder.Services.AddSingleton<VRLifecycle>();
         builder.Services.AddSingleton<VRStartStop>();
         builder.Services.AddSingleton<InverseKinematics>();
+        builder.Services.AddSingleton<SyncSkeletonModifier>();
+        builder.Services.AddSingleton<PoseSyncClient>();
+        builder.Services.AddSingleton<PoseSync>();
 
         builder.Services.AddScoped(x => GetDevice());
         builder.Services.AddScoped(x => GetDeviceContext());

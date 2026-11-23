@@ -35,7 +35,8 @@ public unsafe class VRSession(
     FirstPersonManager firstPersonManager,
     Debugging debugging,
     ITargetManager targetManager,
-    NameplateModifier nameplateModifier
+    NameplateModifier nameplateModifier,
+    PoseSync poseSync
 )
 {
     public void Initialize()
@@ -105,10 +106,12 @@ public unsafe class VRSession(
             {
                 return;
             }
-            gameModifier.UpdateMotionControls(
+            var regions = gameModifier.UpdateMotionControls(
                 phase.VRInputData,
                 vrSystem.RuntimeAdjustments,
                 gameCamera.GetYRotation());
+            var centerView = vrCamera.ComputeCenterView(phase.Views[Eye.Left.ToIndex()], phase.Views[Eye.Right.ToIndex()]);
+            poseSync.PublishLocalPose(regions, gameCamera.GetYRotation(), centerView.Pose.Orientation.ToQuaternion());
         }
     }
 

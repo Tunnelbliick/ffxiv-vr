@@ -29,7 +29,8 @@ public unsafe class GameHooks(
     GameState gameState,
     Configuration configuration,
     EndFrameDispatcher endFrameDispatcher,
-    LetterboxModifier letterboxModifier
+    LetterboxModifier letterboxModifier,
+    PoseSync poseSync
 ) : IDisposable
 {
     /**
@@ -224,6 +225,10 @@ public unsafe class GameHooks(
         exceptionHandler.FaultBarrier(() =>
         {
             vrLifecycle.UpdateVisibility();
+        });
+        exceptionHandler.FaultBarrier(() =>
+        {
+            poseSync.Update();
         });
     }
 

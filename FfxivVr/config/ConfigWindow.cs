@@ -14,6 +14,7 @@ public class ConfigWindow : Window
     private readonly VRLifecycle vrLifecycle;
     private readonly VRStartStop vrStartStop;
     private readonly GameConfigManager gameConfigManager;
+    private readonly PoseSync poseSync;
 
     public List<Tuple<string, Action>> Tabs;
 
@@ -21,7 +22,8 @@ public class ConfigWindow : Window
         Configuration configuration,
         VRLifecycle vrLifecycle,
         VRStartStop vrStartStop,
-        GameConfigManager gameConfigManager
+        GameConfigManager gameConfigManager,
+        PoseSync poseSync
         ) : base("FFXIV VR Settings")
     {
         Flags = ImGuiWindowFlags.NoCollapse;
@@ -32,6 +34,7 @@ public class ConfigWindow : Window
         this.vrLifecycle = vrLifecycle;
         this.vrStartStop = vrStartStop;
         this.gameConfigManager = gameConfigManager;
+        this.poseSync = poseSync;
         Tabs = [
             Tuple.Create("General", GeneralTab),
             Tuple.Create("View", ViewTab),
@@ -39,9 +42,41 @@ public class ConfigWindow : Window
             Tuple.Create("Controls", RenderControlsTab),
             Tuple.Create("First Person", FirstPersonTab),
             Tuple.Create("Third Person", ThirdPersonTab),
+            Tuple.Create("Sync", SyncTab),
             Tuple.Create("Game Config", RenderGameConfig),
             Tuple.Create("Advanced", AdvancedTab),
         ];
+    }
+
+    private void SyncTab()
+    {
+        ImGui.TextWrapped("Lets other players with this plugin see your VR head, hand and finger movements, and lets you see theirs. Nothing is sent unless one of the boxes below is ticked.");
+        Checkbox("Share my VR pose", ref config.SyncSharePose, "While first person motion tracking is active, sends your head, arm and finger rotations to the sync server, tagged with a hashed character id and a hashed zone id.");
+        Checkbox("Show other players' VR poses", ref config.SyncShowOthers, "Works without VR. Applies poses shared by nearby players to their characters.");
+        ImGui.Text("Server");
+        var server = config.SyncServer;
+        if (ImGui.InputText("##sync-server", ref server, 256))
+        {
+            config.SyncServer = server;
+            config.Save();
+        }
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Reset##sync-server"))
+        {
+            config.SyncServer = Configuration.DefaultSyncServer;
+            config.Save();
+        }
+        var status = poseSync.Status switch
+        {
+            PoseSyncStatus.Disconnected => "Off",
+            PoseSyncStatus.Connecting => "Connecting...",
+            PoseSyncStatus.Connected => "Connected",
+            PoseSyncStatus.Unreachable => "Server unreachable",
+            PoseSyncStatus.InvalidAddress => "Invalid server address",
+            _ => "",
+        };
+        ImGui.Text($"Status: {status}");
+        ImGui.Text($"Synced players nearby: {poseSync.ActivePlayers}");
     }
 
     public override void Draw()

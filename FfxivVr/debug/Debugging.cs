@@ -25,6 +25,7 @@ public class Debugging(
     private readonly IGameGui gameGui = gameGui;
 
     public bool ForceTracking = false;
+    public bool SyncLoopback = false;
     public void DebugShow(string key, object? value)
     {
         if (value is Vector3D<float> vec)

@@ -507,6 +507,9 @@
           "Silk.NET.OpenXR.Extensions.KHR": "[2.21.0, )",
           "TerraFX.Interop.Windows": "[10.0.26100.5, )"
         }
+      },
+      "ffxivvrrelay": {
+        "type": "Project"
       }
     }
   }

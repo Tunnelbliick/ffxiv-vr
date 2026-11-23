@@ -49,6 +49,14 @@ public static class MathFactory
         return 2 * MathF.Atan2(quat.Y, quat.W);
     }
 
+    public static (float yaw, float pitch, float roll) ToYawPitchRoll(this Quaternion<float> q)
+    {
+        var pitch = MathF.Asin(Math.Clamp(2 * (q.W * q.X - q.Y * q.Z), -1f, 1f));
+        var yaw = MathF.Atan2(2 * (q.W * q.Y + q.X * q.Z), 1 - 2 * (q.X * q.X + q.Y * q.Y));
+        var roll = MathF.Atan2(2 * (q.W * q.Z + q.X * q.Y), 1 - 2 * (q.X * q.X + q.Z * q.Z));
+        return (yaw, pitch, roll);
+    }
+
     public static float AcuteAngleBetween(float from, float to)
     {
         var angle = to - from;

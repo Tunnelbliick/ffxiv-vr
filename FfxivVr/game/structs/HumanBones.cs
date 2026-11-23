@@ -41,5 +41,17 @@ public static class HumanBones
     public static string PinkyFingerRightA = "j_ko_a_r";
     public static string PinkyFingerRightB = "j_ko_b_r";
 
+    public static string Waist = "j_kosi";
+    public static string LegLeftA = "j_asi_a_l";
+    public static string LegLeftB = "j_asi_b_l";
+    public static string LegLeftC = "j_asi_c_l";
+    public static string LegLeftD = "j_asi_d_l";
+    public static string LegLeftE = "j_asi_e_l";
+    public static string LegRightA = "j_asi_a_r";
+    public static string LegRightB = "j_asi_b_r";
+    public static string LegRightC = "j_asi_c_r";
+    public static string LegRightD = "j_asi_d_r";
+    public static string LegRightE = "j_asi_e_r";
+
     public static string WeaponBoneSubstring = "buki";
 }

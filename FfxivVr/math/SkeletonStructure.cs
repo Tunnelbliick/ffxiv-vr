@@ -1,5 +1,6 @@
 using FFXIVClientStructs.Havok.Animation.Rig;
 using FFXIVClientStructs.Havok.Common.Base.Math.QsTransform;
+using Silk.NET.Maths;
 using System;
 using System.Collections.Generic;
 
@@ -21,18 +22,20 @@ public unsafe class SkeletonStructure
         for (int boneIndex = 0; boneIndex < skeleton->Bones.Length; boneIndex++)
         {
             var name = skeleton->Bones[boneIndex].Name.String ?? "unknown";
+            var parent = boneIndex == 0 ? -1 : skeleton->ParentIndices[boneIndex];
+            if (parent >= bonesByInternalIndex.Count)
+            {
+                parent = -1;
+            }
             var bone = new Bone(
                 index: boneIndex,
                 referencePose: skeleton->ReferencePose[boneIndex],
-                name: name!
+                name: name!,
+                parent: parent
             );
-            if (boneIndex != 0)
+            if (parent >= 0)
             {
-                var parent = skeleton->ParentIndices[boneIndex];
-                if (parent >= 0 && parent < bonesByInternalIndex.Count)
-                {
-                    bonesByInternalIndex[parent].Children.Add(boneIndex);
-                }
+                bonesByInternalIndex[parent].Children.Add(boneIndex);
             }
             bonesByInternalIndex.Add(bone);
             bonesByType[name] = bone;
@@ -42,6 +45,22 @@ public unsafe class SkeletonStructure
     internal Bone? GetBone(string boneName)
     {
         return bonesByType.GetValueOrDefault(boneName);
+    }
+
+    private Dictionary<int, Quaternion<float>> referenceModelRotations = new();
+    public Quaternion<float> GetReferenceModelRotation(Bone bone)
+    {
+        if (referenceModelRotations.TryGetValue(bone.Index, out var cached))
+        {
+            return cached;
+        }
+        var rotation = bone.ReferencePose.Rotation.ToQuaternion();
+        if (bone.Parent >= 0)
+        {
+            rotation = GetReferenceModelRotation(bonesByInternalIndex[bone.Parent]) * rotation;
+        }
+        referenceModelRotations[bone.Index] = rotation;
+        return rotation;
     }
 
     public List<Bone> GetChildren(Bone bone, Func<string, bool>? filter)
@@ -76,9 +95,10 @@ public unsafe class SkeletonStructure
         return bones;
     }
 }
-public unsafe class Bone(int index, hkQsTransformf referencePose, string name)
+public unsafe class Bone(int index, hkQsTransformf referencePose, string name, int parent)
 {
     internal readonly int Index = index;
+    internal readonly int Parent = parent;
     internal List<int> Children = new List<int>();
     internal readonly hkQsTransformf ReferencePose = referencePose;
     public readonly string Name = name;

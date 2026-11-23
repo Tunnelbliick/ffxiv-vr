@@ -152,6 +152,33 @@ public unsafe class SkeletonModifier(
         *local = bone.ReferencePose;
     }
 
+    public void ResetRotationTree(hkaPose* pose, SkeletonStructure structure, string boneName, Func<string, bool> filter, float weight)
+    {
+        if (structure.GetBone(boneName) is not Bone root)
+        {
+            return;
+        }
+        ResetRotation(root, pose, weight);
+        foreach (var bone in structure.GetDescendants(root, filter))
+        {
+            ResetRotation(bone, pose, weight);
+        }
+    }
+
+    private void ResetRotation(Bone bone, hkaPose* pose, float weight)
+    {
+        var local = bone.GetLocalTransforms(pose);
+        local->Rotation = Quaternion<float>.Slerp(local->Rotation.ToQuaternion(), bone.ReferencePose.Rotation.ToQuaternion(), weight).ToQuaternion();
+    }
+
+    public void SetModelRotation(Bone bone, hkaPose* pose, Quaternion<float> target, float weight)
+    {
+        var current = bone.GetModelTransforms(pose)->Rotation.ToQuaternion();
+        var blended = Quaternion<float>.Slerp(current, target, weight);
+        var local = bone.GetLocalTransforms(pose);
+        local->Rotation = Quaternion<float>.Normalize(local->Rotation.ToQuaternion() * current.Inverse() * blended).ToQuaternion();
+    }
+
     public void RotateHand(Posef palmPose, string handBoneName, string wristBoneName, SkeletonStructure structure, hkaPose* pose, Quaternion<float> skeletonRotation)
     {
         var desiredRotation = palmPose.Orientation.ToQuaternion();

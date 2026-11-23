@@ -56,6 +56,7 @@ public class DebugWindow : Window
                     ImGui.Checkbox("Trace Logging", ref debugging.Trace);
                     ImGui.Checkbox("Always Motion Controls", ref debugging.AlwaysMotionControls);
                     ImGui.Checkbox("Enable tracking in 3rd person", ref debugging.ForceTracking);
+                    ImGui.Checkbox("Mirror my synced pose onto my target", ref debugging.SyncLoopback);
                     ImGui.InputInt("Index", ref debugging.Index);
                     ImGui.SliderFloat("Float", ref debugging.Float, -1, 1);
                 }

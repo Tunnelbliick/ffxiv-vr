@@ -83,6 +83,11 @@ public class Configuration : IPluginConfiguration
 
     public bool EnableDebug = false;
 
+    public bool SyncSharePose = false;
+    public bool SyncShowOthers = false;
+    public string SyncServer = DefaultSyncServer;
+    public const string DefaultSyncServer = "vr.tnnlb.dev:7850";
+
     public uint? GetVRGameSetting(string id)
     {
         if (VRGameSettings.ContainsKey(id))

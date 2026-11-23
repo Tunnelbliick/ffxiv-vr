@@ -95,41 +95,45 @@ public unsafe class GameModifier(
         return skeletonModifier.GetHeadPosition(skeleton);
     }
 
-    internal void UpdateMotionControls(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation)
+    internal SyncRegions UpdateMotionControls(VRInputData vrInputData, RuntimeAdjustments runtimeAdjustments, float cameraYRotation)
     {
         var characterBase = gameState.GetCharacterBase();
         if (characterBase == null)
         {
-            return;
+            return SyncRegions.None;
         }
         var actorModel = gameState.GetCharacterBaseExtended();
         var skeleton = characterBase->Skeleton;
         var pose = SkeletonModifier.GetPose(skeleton);
         if (pose == null)
         {
-            return;
+            return SyncRegions.None;
         }
         if (skeletonModifier.GetSkeletonStructure(skeleton) is not { } structure)
         {
-            return;
+            return SyncRegions.None;
         }
         var skeletonRotation = MathFactory.YRotation(cameraYRotation) / skeleton->Transform.Rotation.ToQuaternion();
         if (skeletonModifier.GetHeadPosition(skeleton) is not { } head)
         {
-            return;
+            return SyncRegions.None;
         }
         if (configuration.BodyTracking && vrInputData.BodyJoints is { } bodyJoints)
         {
             bodySkeletonModifier.Apply(pose, structure, skeletonRotation, bodyJoints, vrInputData.HandPose);
+            return SyncRegions.UpperBody;
         }
         else if (configuration.HandTracking && vrInputData.HandPose.HasData())
         {
             handTrackingSkeletonModifier.Apply(pose, structure, skeletonRotation, head, vrInputData.HandPose, runtimeAdjustments);
+            return SyncRegions.Arms;
         }
         else if (configuration.ControllerTracking && vrInputData.PalmPose.HasData())
         {
             controllerTrackingSkeletonModifier.Apply(pose, structure, skeletonRotation, head, vrInputData.PalmPose);
+            return SyncRegions.Arms;
         }
+        return SyncRegions.None;
     }
 
     internal void ResetVerticalCameraRotation(float rotation)
