@@ -30,4 +30,5 @@ public enum VRAction
     MouseButton1,
     MouseButton2,
     MouseButton3,
+    ResetView,
 }

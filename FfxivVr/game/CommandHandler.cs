@@ -20,7 +20,7 @@ public class CommandHander(
     {
         commandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "Run /vr start and /vr stop to toggle VR. Run /vr to open settings."
+            HelpMessage = "Run /vr start and /vr stop to toggle VR. Run /vr to open settings. Run /vr resetview to recenter and turn the camera to face where your character faces."
         });
     }
 
@@ -47,6 +47,9 @@ public class CommandHander(
                     break;
                 case "recenter":
                     vrLifecycle.RecenterCamera();
+                    break;
+                case "resetview":
+                    vrLifecycle.ResetView();
                     break;
                 case "config":
                     if (arguments.ElementAtOrDefault(1) is not string name || arguments.ElementAtOrDefault(2) is not string value)

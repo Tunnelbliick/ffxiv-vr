@@ -93,6 +93,13 @@ public unsafe class VRSession(
     public void RecenterCamera()
     {
         vrSpace.RecenterCamera();
+        bodyYaw.Reset();
+    }
+
+    public void ResetView()
+    {
+        RecenterCamera();
+        gameModifier.ResetCameraDirection();
     }
 
     public void UpdateVisibility()
@@ -221,6 +228,10 @@ public unsafe class VRSession(
         {
             var padDeviceExtended = PadDeviceExtended.FromPadDevice(padDevice);
             inputManager.UpdateGamepad(&padDevice->GamepadInputData, phase.VRInputData, padDeviceExtended->IsActive);
+            if (inputManager.WasPressed(VRAction.ResetView))
+            {
+                ResetView();
+            }
         }
     }
 

@@ -242,6 +242,18 @@ public unsafe class GameModifier(
         }
     }
 
+    internal void ResetCameraDirection()
+    {
+        var camera = gameState.GetActiveCamera();
+        var character = gameState.getCharacterOrGpose();
+        if (camera == null || character == null)
+        {
+            return;
+        }
+        camera->DirH = BodyYaw.CameraDirectionBehind(character->Rotation);
+        camera->DirV = 0;
+    }
+
     internal void ResetVerticalCameraRotation(float rotation)
     {
         var camera = gameState.GetActiveCamera();

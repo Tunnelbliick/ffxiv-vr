@@ -212,6 +212,14 @@ public unsafe class VRLifecycle(
         }
     }
 
+    internal void ResetView()
+    {
+        lock (this)
+        {
+            ActiveSession?.ResetView();
+        }
+    }
+
     internal void UpdateVisibility()
     {
         lock (this)

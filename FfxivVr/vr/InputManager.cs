@@ -19,10 +19,41 @@ public class InputManager(
 {
     public unsafe void UpdateGamepad(GamepadInputData* gamepadInput, VRInputData vrInput, bool isGamepadActive)
     {
-        var state = vrInput.GetPhysicalActionsState(configuration.DisableControllersWhenTracking);
+        var physical = vrInput.GetPhysicalActionsState(configuration.DisableControllersWhenTracking);
+        var left = configuration.ControllerPointer ? vrUI.GetViewportPosition(AimType.LeftHand, vrInput.AimPose) : null;
+        var right = configuration.ControllerPointer ? vrUI.GetViewportPosition(AimType.RightHand, vrInput.AimPose) : null;
+        var pointerFrame = controllerPointer.Update(physical.Pressed, left, right);
+        laserHand = pointerFrame.LaserHand;
+        var state = new FfxivVR.VRActionsState
+        {
+            LeftStick = physical.LeftStick,
+            RightStick = physical.RightStick,
+            Pressed = pointerFrame.GamepadButtons,
+        };
         var pressedActions = ApplyBindings(state);
         var actionsState = ApplyStates(pressedActions, gamepadInput, isGamepadActive);
-        UpdateMousePosition(actionsState, vrInput.AimPose);
+        var pointerPosition = pointerFrame.CursorHand switch
+        {
+            PointerHand.Left => left,
+            PointerHand.Right => right,
+            _ => null,
+        };
+        UpdateMousePosition(actionsState, vrInput.AimPose, pointerFrame, pointerPosition);
+    }
+
+    private readonly ControllerPointer controllerPointer = new();
+    private PointerHand? laserHand;
+
+    private static (MOUSE_EVENT_FLAGS Down, MOUSE_EVENT_FLAGS Up) PointerFlags(PointerClick click)
+    {
+        return click == PointerClick.Left
+            ? (MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTDOWN, MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTUP)
+            : (MOUSE_EVENT_FLAGS.MOUSEEVENTF_RIGHTDOWN, MOUSE_EVENT_FLAGS.MOUSEEVENTF_RIGHTUP);
+    }
+
+    public bool WasPressed(VRAction action)
+    {
+        return actionStates.GetValueOrDefault(action)?.WasPressed == true;
     }
 
     private List<Tuple<VRAction, MOUSE_EVENT_FLAGS, MOUSE_EVENT_FLAGS>> ButtonMappings = new() {
@@ -30,7 +61,7 @@ public class InputManager(
         Tuple.Create(VRAction.MouseButton2, MOUSE_EVENT_FLAGS.MOUSEEVENTF_RIGHTDOWN, MOUSE_EVENT_FLAGS.MOUSEEVENTF_RIGHTUP),
         Tuple.Create(VRAction.MouseButton3, MOUSE_EVENT_FLAGS.MOUSEEVENTF_MIDDLEDOWN, MOUSE_EVENT_FLAGS.MOUSEEVENTF_MIDDLEUP),
     };
-    private void UpdateMousePosition(Dictionary<VRAction, ActionState> actionsState, AimPose aimPose)
+    private void UpdateMousePosition(Dictionary<VRAction, ActionState> actionsState, AimPose aimPose, PointerFrame pointerFrame, Vector2D<float>? pointerPosition)
     {
         // Release buttons regardless of mouse position
         foreach (var (action, _, up) in ButtonMappings)
@@ -39,6 +70,10 @@ public class InputManager(
             {
                 SendMouseEvent(up);
             }
+        }
+        foreach (var click in pointerFrame.Up)
+        {
+            SendMouseEvent(PointerFlags(click).Up);
         }
         Vector2D<float>? maybePosition = null;
         if (actionsState.GetValueOrDefault(VRAction.EnableRightMouseHold)?.IsActive == true)
@@ -49,6 +84,7 @@ public class InputManager(
         {
             maybePosition = vrUI.GetViewportPosition(AimType.LeftHand, aimPose);
         }
+        maybePosition ??= pointerPosition;
         if (configuration.HeadMouseControl && maybePosition == null)
         {
             maybePosition = vrUI.GetViewportPosition(AimType.Head, aimPose);
@@ -69,6 +105,10 @@ public class InputManager(
             {
                 SendMouseEvent(down);
             }
+        }
+        foreach (var click in pointerFrame.Down)
+        {
+            SendMouseEvent(PointerFlags(click).Down);
         }
     }
 
@@ -353,6 +393,16 @@ public class InputManager(
         if (actionStates.GetValueOrDefault(VRAction.EnableRightMouseHold)?.IsActive ?? false)
         {
             aimTypes.Add(AimType.RightHand);
+        }
+        var pointerAim = laserHand switch
+        {
+            PointerHand.Left => AimType.LeftHand,
+            PointerHand.Right => AimType.RightHand,
+            _ => (AimType?)null,
+        };
+        if (pointerAim is AimType aim && !aimTypes.Contains(aim))
+        {
+            aimTypes.Add(aim);
         }
         return aimTypes;
     }

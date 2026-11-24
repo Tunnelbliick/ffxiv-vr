@@ -271,6 +271,7 @@ public class ConfigWindow : Window
             {
                 if (tab)
                 {
+                    Checkbox("Controller pointer", ref config.ControllerPointer, "Point a controller at the game UI or a plugin window to move the cursor there. While pointing at it, the trigger left-clicks and the grip right-clicks. Point away from the UI to use the trigger and grip as normal.");
                     Checkbox("Enable Head Mouse Control", ref config.HeadMouseControl, "Use your head to control the mouse cursor.");
                     Slider("Left Stick Deadzone", ref config.LeftStickDeadzone, defaultValue: 0, min: 0, max: 1);
                     Slider("Right Stick Deadzone", ref config.RightStickDeadzone, defaultValue: 0, min: 0, max: 1);

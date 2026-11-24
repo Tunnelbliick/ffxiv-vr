@@ -46,6 +46,17 @@ public class BodyYaw
         return current;
     }
 
+    public void Reset()
+    {
+        yaw = null;
+        lastUpdate = null;
+    }
+
+    public static float CameraDirectionBehind(float characterRotation)
+    {
+        return MathFactory.AcuteAngleBetween(0, characterRotation - MathF.PI);
+    }
+
     public static float? HeadingYaw(Quaternion<float> orientation)
     {
         var forward = Vector3D.Transform(-Vector3D<float>.UnitZ, orientation);

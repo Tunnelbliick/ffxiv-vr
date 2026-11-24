@@ -93,4 +93,26 @@ public class BodyYawTests
         var reset = yaw.Update(Head(0), false, 0.011);
         Assert.That(Degrees(reset), Is.EqualTo(0).Within(1E-3f));
     }
+
+    [Test]
+    public void ResetFollowsTheNextHeadingAtOnce()
+    {
+        var yaw = new BodyYaw();
+        yaw.Update(Head(40), false, 0);
+        yaw.Reset();
+        Assert.That(Degrees(yaw.Update(Head(-30), false, 0.011)), Is.EqualTo(-30).Within(1E-3f));
+    }
+
+    [Test]
+    public void ResetCameraLooksWhereTheCharacterFaces()
+    {
+        foreach (var degrees in new[] { -180f, -120f, -45f, 0f, 30f, 90f, 179f })
+        {
+            var rotation = float.DegreesToRadians(degrees);
+            var direction = BodyYaw.CameraDirectionBehind(rotation);
+            var facing = BodyYaw.FacingYaw(new Vector3D<float>(MathF.Sin(rotation), 0, MathF.Cos(rotation)));
+            Assert.That(MathFactory.AcuteAngleBetween(direction, facing), Is.EqualTo(0).Within(1E-4f));
+            Assert.That(MathF.Abs(direction), Is.LessThanOrEqualTo(MathF.PI + 1E-5f));
+        }
+    }
 }
