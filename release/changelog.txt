@@ -1,8 +1,21 @@
-# Pass vertical shake to third person and allow up to 10x shake
-The level and floor-locked third-person cameras dropped the vertical part
-of the game's screen shake, so stomps didn't shake the VR view; they now
-add the height of the look-at offset. The Camera shake setting goes up to
-10x, with the scaled shake capped, and the debug window can play a test
-shake.
+# Keep the torso upright when looking up
+Looking up at a taller character could hunch the shared body, since the
+spine leaned toward the headset without regard to where the head looked.
+After the lean, the spine now straightens until the chest faces no more
+than 45 degrees below the head's aim (or 50 degrees above it when looking
+down), like VRIK's chest clamp, and the neck turns relative to the chest
+so it always sits between the chest and the head.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+# Carry the game's camera quake into VR
+Stomps and other battle-effect camera quakes shake the game's view matrix,
+which VR replaced, so the shake never reached the headset. The plugin now
+reads the quake's offset, pitch, yaw and roll from that matrix and adds
+them back in every camera mode, scaled by the Camera shake setting. It
+also no longer reads back its own view, which made the screen tilt at
+high shake strengths. The debug window can test each source of shake
+separately. Quakes from other players only play when the game's Battle
+Effects setting for others allows it.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
