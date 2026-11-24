@@ -15,6 +15,12 @@ CameraShake cameraShake
 )
 {
     private float near = 0.1f;
+    private Matrix4X4<float>? lastWrittenView;
+
+    internal bool IsLastWrittenView(Matrix4X4<float> view)
+    {
+        return lastWrittenView is { } last && last == view;
+    }
 
     internal Matrix4x4 ComputeGameProjectionMatrix(View view)
     {
@@ -100,8 +106,8 @@ CameraShake cameraShake
         var shakeRotation = Matrix4X4<float>.Identity;
         if (configuration.CameraShake > 0)
         {
-            cameraPosition += cameraShake.ScaledOffset(configuration.CameraShake) * cameraMode.ShakeOffsetAxes;
-            shakeRotation = cameraShake.RollMatrix(configuration.CameraShake);
+            cameraPosition += cameraShake.ScaledOffset(configuration.CameraShake) * cameraMode.ShakeOffsetAxes + cameraShake.ScaledEyeOffset(configuration.CameraShake);
+            shakeRotation = cameraShake.RotationMatrix(configuration.CameraShake);
         }
 
         var gameViewMatrix = shakeRotation * cameraMode.GetRotationMatrix(gameCamera) * Matrix4X4.CreateTranslation(cameraPosition);
@@ -224,6 +230,7 @@ CameraShake cameraShake
         }
         camera->RenderCamera->ViewMatrix = ComputeGameViewMatrix(view, cameraType, gameCamera).ToMatrix4x4();
         camera->ViewMatrix = camera->RenderCamera->ViewMatrix;
+        lastWrittenView = camera->RenderCamera->ViewMatrix.ToMatrix4X4();
 
         camera->RenderCamera->FoV = view.Fov.AngleRight - view.Fov.AngleLeft;
     }

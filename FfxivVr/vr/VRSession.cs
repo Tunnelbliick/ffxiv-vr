@@ -85,7 +85,8 @@ public unsafe class VRSession(
         }
         if (camera->RenderCamera != null)
         {
-            cameraShake.Update(camera->LookAtVector.ToVector3D(), gameState.GetFixedHeadPosition(), camera->RenderCamera->ViewMatrix.ToMatrix4X4(), Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
+            var gameView = camera->RenderCamera->ViewMatrix.ToMatrix4X4();
+            cameraShake.Update(camera->LookAtVector.ToVector3D(), gameState.GetFixedHeadPosition(), camera->Position.ToVector3D(), vrCamera.IsLastWrittenView(gameView) ? null : gameView, Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
         }
         renderStrategy.UpdateCamera(camera);
     }

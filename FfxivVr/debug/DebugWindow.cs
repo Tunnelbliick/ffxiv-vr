@@ -73,17 +73,35 @@ public class DebugWindow : Window
             }
         }
     }
+    private void ShakeTestButton(string label, ShakeSource source)
+    {
+        if (ImGui.Button(label))
+        {
+            cameraShake.StartTest(source, Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
+        }
+    }
+
     private unsafe void renderCustomData()
     {
         ImGui.Text($"Shake look-at offset: {cameraShake.RawOffset.X:F3}, {cameraShake.RawOffset.Y:F3}, {cameraShake.RawOffset.Z:F3}");
-        ImGui.Text($"Shake offset: {cameraShake.Offset.Length:F3} (peak {cameraShake.PeakOffset:F3})");
-        ImGui.Text($"Shake roll: {float.RadiansToDegrees(cameraShake.RawRoll):F2}°, filtered {float.RadiansToDegrees(cameraShake.Roll):F2}° (peak {float.RadiansToDegrees(cameraShake.PeakRoll):F2}°)");
-        if (ImGui.Button("Test camera shake"))
-        {
-            cameraShake.StartTest(Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
-        }
+        ImGui.Text($"Shake camera matrix offset: {cameraShake.RawEyeOffset.X:F3}, {cameraShake.RawEyeOffset.Y:F3}, {cameraShake.RawEyeOffset.Z:F3}");
+        ImGui.Text($"Shake offset: look-at {cameraShake.Offset.Length:F3}, matrix {cameraShake.EyeOffset.Length:F3} (peak {cameraShake.PeakOffset:F3})");
+        ImGui.Text($"Shake angles: pitch {float.RadiansToDegrees(cameraShake.Pitch):F2}°, yaw {float.RadiansToDegrees(cameraShake.Yaw):F2}°, roll {float.RadiansToDegrees(cameraShake.Roll):F2}° (peak {float.RadiansToDegrees(cameraShake.PeakAngle):F2}°)");
+        ImGui.Text("Test camera shake:");
         ImGui.SameLine();
-        ImGui.TextDisabled("Plays a short stomp-like shake in VR, scaled by the Camera shake setting");
+        ImGui.TextDisabled("(?)");
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Fakes a short stomp in the game camera data the plugin reads, before it looks for shake, so each button goes through the same path a real shake from that source takes. Scaled by the Camera shake setting. Look-at only moves the view up and down in the level and floor-locked third-person cameras, and not at all in the free orbit camera, which follows the game camera's own pitch instead.");
+        }
+        ShakeTestButton("Look-at point", ShakeSource.LookAt);
+        ImGui.SameLine();
+        ShakeTestButton("Camera position", ShakeSource.CameraPosition);
+        ImGui.SameLine();
+        ShakeTestButton("Pitch/yaw", ShakeSource.CameraRotation);
+        ShakeTestButton("Roll", ShakeSource.CameraRoll);
+        ImGui.SameLine();
+        ShakeTestButton("Full quake", ShakeSource.Quake);
         var gameCamera = gameState.GetActiveCamera();
         var charBase = gameState.GetCharacterBaseExtended();
         var charOrGpose = gameState.getCharacterOrGpose();
