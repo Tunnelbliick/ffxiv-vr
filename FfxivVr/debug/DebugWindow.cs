@@ -2,6 +2,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -77,6 +78,12 @@ public class DebugWindow : Window
         ImGui.Text($"Shake look-at offset: {cameraShake.RawOffset.X:F3}, {cameraShake.RawOffset.Y:F3}, {cameraShake.RawOffset.Z:F3}");
         ImGui.Text($"Shake offset: {cameraShake.Offset.Length:F3} (peak {cameraShake.PeakOffset:F3})");
         ImGui.Text($"Shake roll: {float.RadiansToDegrees(cameraShake.RawRoll):F2}°, filtered {float.RadiansToDegrees(cameraShake.Roll):F2}° (peak {float.RadiansToDegrees(cameraShake.PeakRoll):F2}°)");
+        if (ImGui.Button("Test camera shake"))
+        {
+            cameraShake.StartTest(Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
+        }
+        ImGui.SameLine();
+        ImGui.TextDisabled("Plays a short stomp-like shake in VR, scaled by the Camera shake setting");
         var gameCamera = gameState.GetActiveCamera();
         var charBase = gameState.GetCharacterBaseExtended();
         var charOrGpose = gameState.getCharacterOrGpose();

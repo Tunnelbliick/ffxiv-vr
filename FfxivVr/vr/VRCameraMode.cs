@@ -40,7 +40,7 @@ public abstract class VRCameraMode
     }
     public virtual bool ShouldLockCameraVerticalRotation { get; } = false;
     public virtual bool UseHeadMovement { get; } = true;
-    public virtual bool AddsShakeOffset { get; } = false;
+    public virtual Vector3D<float> ShakeOffsetAxes { get; } = Vector3D<float>.Zero;
 }
 
 class OrbitCamera() : VRCameraMode
@@ -58,6 +58,8 @@ class OrbitCamera() : VRCameraMode
 class LevelOrbitCamera() : VRCameraMode
 {
     public override Vector3D<float> GetCameraPosition(GameCamera gameCamera) { return gameCamera.Position; }
+
+    public override Vector3D<float> ShakeOffsetAxes { get; } = Vector3D<float>.UnitY;
 }
 
 
@@ -77,7 +79,7 @@ class FirstPersonCamera : VRCameraMode
         return pos;
     }
 
-    public override bool AddsShakeOffset { get; } = true;
+    public override Vector3D<float> ShakeOffsetAxes { get; } = Vector3D<float>.One;
 }
 
 class FollowingFirstPersonCamera : VRCameraMode
@@ -96,7 +98,7 @@ class FollowingFirstPersonCamera : VRCameraMode
         return pos;
     }
 
-    public override bool AddsShakeOffset { get; } = true;
+    public override Vector3D<float> ShakeOffsetAxes { get; } = Vector3D<float>.One;
 }
 class BodyTrackingCamera : FollowingFirstPersonCamera
 {
@@ -135,4 +137,6 @@ class LockedFloorCamera : VRCameraMode
     }
 
     public override bool ShouldLockCameraVerticalRotation { get; } = true;
+
+    public override Vector3D<float> ShakeOffsetAxes { get; } = Vector3D<float>.UnitY;
 }

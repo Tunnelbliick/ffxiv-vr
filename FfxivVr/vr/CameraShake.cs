@@ -11,6 +11,14 @@ public class CameraShake
     private const float ResetDistance = 1f;
     private const double MaxStep = 0.25;
     private const float PeakDecaySeconds = 2f;
+    public const float MaxScaledOffset = 2f;
+    public static readonly float MaxScaledRoll = float.DegreesToRadians(30);
+    public const float TestSeconds = 1.2f;
+    private const float TestDecaySeconds = 0.3f;
+    private const float TestAmplitude = 0.06f;
+    private static readonly float TestRollAmplitude = float.DegreesToRadians(1);
+
+    private double? testStart;
 
     private Vector3D<float> offsetAverage;
     private float rollAverage;
@@ -50,6 +58,19 @@ public class CameraShake
         var offset = RawOffset - offsetAverage;
         Offset = offset.Length > MaxOffset ? offset * (MaxOffset / offset.Length) : offset;
         Roll = Math.Clamp(MathFactory.AcuteAngleBetween(rollAverage, RawRoll), -MaxRoll, MaxRoll);
+        if (testStart is double start)
+        {
+            var t = (float)(now - start);
+            if (t >= 0 && t < TestSeconds)
+            {
+                Offset += TestOffset(t);
+                Roll += TestRoll(t);
+            }
+            else
+            {
+                testStart = null;
+            }
+        }
 
         var decay = float.IsFinite((float)dt) ? MathF.Exp(-(float)dt / PeakDecaySeconds) : 0;
         PeakOffset = MathF.Max(PeakOffset * decay, Offset.Length);
@@ -91,8 +112,34 @@ public class CameraShake
         return float.IsFinite(vector.X) && float.IsFinite(vector.Y) && float.IsFinite(vector.Z);
     }
 
+    public void StartTest(double now)
+    {
+        testStart = now;
+    }
+
+    public static Vector3D<float> TestOffset(float t)
+    {
+        return new Vector3D<float>(0, TestAmplitude * MathF.Exp(-t / TestDecaySeconds) * MathF.Sin(2 * MathF.PI * 9 * t), 0);
+    }
+
+    public static float TestRoll(float t)
+    {
+        return TestRollAmplitude * MathF.Exp(-t / TestDecaySeconds) * MathF.Sin(2 * MathF.PI * 6 * t);
+    }
+
+    public Vector3D<float> ScaledOffset(float strength)
+    {
+        var offset = Offset * strength;
+        return offset.Length > MaxScaledOffset ? offset * (MaxScaledOffset / offset.Length) : offset;
+    }
+
+    public float ScaledRoll(float strength)
+    {
+        return Math.Clamp(Roll * strength, -MaxScaledRoll, MaxScaledRoll);
+    }
+
     public Matrix4X4<float> RollMatrix(float strength)
     {
-        return Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromAxisAngle(-Vector3D<float>.UnitZ, Roll * strength));
+        return Matrix4X4.CreateFromQuaternion(Quaternion<float>.CreateFromAxisAngle(-Vector3D<float>.UnitZ, ScaledRoll(strength)));
     }
 }

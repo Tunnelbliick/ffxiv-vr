@@ -100,10 +100,7 @@ CameraShake cameraShake
         var shakeRotation = Matrix4X4<float>.Identity;
         if (configuration.CameraShake > 0)
         {
-            if (cameraMode.AddsShakeOffset)
-            {
-                cameraPosition += cameraShake.Offset * configuration.CameraShake;
-            }
+            cameraPosition += cameraShake.ScaledOffset(configuration.CameraShake) * cameraMode.ShakeOffsetAxes;
             shakeRotation = cameraShake.RollMatrix(configuration.CameraShake);
         }
 

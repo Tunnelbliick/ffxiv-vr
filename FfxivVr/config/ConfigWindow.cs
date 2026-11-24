@@ -152,7 +152,7 @@ public class ConfigWindow : Window
         ComboDropdown("Switch View Mode when Entering Combat", ["Disabled", "First Person", "Third Person"], ref config.AutoCombatViewMode);
         Slider("World Scale", ref config.WorldScale);
         Slider("Gamma", ref config.Gamma, defaultValue: 2.2f);
-        Slider("Camera shake", ref config.CameraShake, defaultValue: 1, min: 0, max: 1, help: "How much of the game's screen shake reaches your view. 0 turns it off.");
+        Slider("Camera shake", ref config.CameraShake, defaultValue: 1, min: 0, max: 10, help: "How strongly the game's screen shake reaches your view: 0 turns it off, 1 is the game's own strength, up to 10x. The debug window (/vr debug) has a button to test it.");
         Checkbox("Seated play", ref config.SeatedPlay, "For playing sitting down. Your character keeps standing at full height: sitting low or slouching isn't read as crouching, and the direction you faced when you last recentered stays your body's forward, so turning your head in third person turns only your character's head.");
     }
 

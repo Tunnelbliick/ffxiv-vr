@@ -113,4 +113,42 @@ public class CameraShakeTests
         shake.Update(new Vector3D<float>(0, 0.9f, 0), Vector3D<float>.Zero, view, 0.011);
         Assert.That(shake.Offset.Length, Is.LessThanOrEqualTo(CameraShake.MaxOffset + 1E-5f));
     }
+
+    [Test]
+    public void StrengthScalesUpToTheLimits()
+    {
+        var shake = new CameraShake();
+        var view = RolledView(0);
+        shake.Update(Vector3D<float>.Zero, Vector3D<float>.Zero, view, 0);
+        shake.Update(new Vector3D<float>(0, 0.05f, 0), Vector3D<float>.Zero, RolledView(1), 0.011);
+        Assert.That(shake.ScaledOffset(10).Length, Is.EqualTo(shake.Offset.Length * 10).Within(1E-5f));
+        Assert.That(shake.ScaledRoll(10), Is.EqualTo(shake.Roll * 10).Within(1E-5f));
+
+        shake.Update(new Vector3D<float>(0, 0.45f, 0), Vector3D<float>.Zero, RolledView(9), 0.022);
+        Assert.That(shake.ScaledOffset(10).Length, Is.LessThanOrEqualTo(CameraShake.MaxScaledOffset + 1E-5f));
+        Assert.That(MathF.Abs(shake.ScaledRoll(10)), Is.LessThanOrEqualTo(CameraShake.MaxScaledRoll + 1E-5f));
+        Assert.That(shake.ScaledOffset(0), Is.EqualTo(Vector3D<float>.Zero));
+    }
+
+    [Test]
+    public void TestShakePlaysOnceThenStops()
+    {
+        var shake = new CameraShake();
+        var anchor = new Vector3D<float>(100, 5, 100);
+        var view = RolledView(0);
+        shake.Update(anchor, anchor, view, 0);
+        shake.StartTest(0);
+        var peak = 0f;
+        var time = 0.0;
+        while (time < CameraShake.TestSeconds)
+        {
+            time += 0.011;
+            shake.Update(anchor, anchor, view, time);
+            peak = MathF.Max(peak, shake.Offset.Length);
+        }
+        Assert.That(peak, Is.GreaterThan(0.02f));
+        shake.Update(anchor, anchor, view, time + 0.011);
+        Assert.That(shake.Offset.Length, Is.EqualTo(0).Within(1E-5f));
+        Assert.That(shake.Roll, Is.EqualTo(0).Within(1E-5f));
+    }
 }
