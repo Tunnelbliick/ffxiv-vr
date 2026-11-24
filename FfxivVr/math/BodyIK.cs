@@ -12,6 +12,9 @@ public static class BodyIK
     public static readonly float MaxShoulderAngle = float.DegreesToRadians(25);
     public static readonly float[] LeanShares = [0.45f, 0.35f, 0.2f];
     public static readonly float[] YawShares = [0.1f, 0.1f, 0.1f];
+    public static readonly float MaxNeckLookUp = float.DegreesToRadians(45);
+    public static readonly float MaxNeckLookDown = float.DegreesToRadians(50);
+    public static readonly float[] StraightenShares = [0.2f, 0.35f, 0.45f];
 
     private const int LeanIterations = 6;
     private const float ShoulderReachStart = 0.85f;
@@ -37,8 +40,9 @@ public static class BodyIK
         return horizontal + new Vector3D<float>(0, vertical, 0);
     }
 
-    public static Quaternion<float>[] SolveSpine(ReadOnlySpan<Vector3D<float>> joints, Vector3D<float> end, Vector3D<float> endOffset, Vector3D<float> target, float yaw)
+    public static Quaternion<float>[] SolveSpine(ReadOnlySpan<Vector3D<float>> joints, Vector3D<float> end, Vector3D<float> endOffset, Vector3D<float> target, Quaternion<float> head, Quaternion<float> chest)
     {
+        var yaw = head.ToYawPitchRoll().yaw;
         if (joints.Length != LeanShares.Length)
         {
             throw new ArgumentException($"Expected {LeanShares.Length} spine joints, got {joints.Length}");
@@ -69,7 +73,30 @@ public static class BodyIK
                 RotateAt(points, deltas, i, Quaternion<float>.CreateFromAxisAngle(axis, angle * LeanShares[i]));
             }
         }
+        KeepNeckInRange(points, deltas, head, chest);
         return deltas;
+    }
+
+    public static float Elevation(Vector3D<float> direction)
+    {
+        return direction.Length < Epsilon ? 0 : MathF.Asin(Math.Clamp(direction.Y / direction.Length, -1f, 1f));
+    }
+
+    private static void KeepNeckInRange(Vector3D<float>[] points, Quaternion<float>[] deltas, Quaternion<float> head, Quaternion<float> chest)
+    {
+        var chestForward = Vector3D.Transform(Vector3D<float>.UnitZ, deltas[^1] * chest);
+        var bend = Elevation(Vector3D.Transform(Vector3D<float>.UnitZ, head)) - Elevation(chestForward);
+        var correction = bend > MaxNeckLookUp ? bend - MaxNeckLookUp : bend < -MaxNeckLookDown ? bend + MaxNeckLookDown : 0;
+        var level = new Vector3D<float>(chestForward.X, 0, chestForward.Z);
+        if (correction == 0 || level.Length < Epsilon)
+        {
+            return;
+        }
+        var axis = Vector3D.Normalize(Vector3D.Cross(level, Vector3D<float>.UnitY));
+        for (int i = 0; i < deltas.Length; i++)
+        {
+            RotateAt(points, deltas, i, Quaternion<float>.CreateFromAxisAngle(axis, correction * StraightenShares[i]));
+        }
     }
 
     private static void RotateAt(Vector3D<float>[] points, Quaternion<float>[] deltas, int joint, Quaternion<float> rotation)

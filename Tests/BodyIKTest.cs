@@ -30,7 +30,7 @@ public class BodyIKTests
     [Test]
     public void NoDisplacementKeepsTheSpine()
     {
-        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, RestEffector, 0);
+        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, RestEffector, Quaternion<float>.Identity, Quaternion<float>.Identity);
         foreach (var delta in deltas)
         {
             Assert.That(BodyIK.Angle(delta), Is.LessThan(1E-3f));
@@ -41,7 +41,7 @@ public class BodyIKTests
     public void LeaningForwardBendsTheSpineTowardTheHead()
     {
         var target = RestEffector + new Vector3D<float>(0, -0.05f, 0.25f);
-        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, 0);
+        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, Quaternion<float>.Identity, Quaternion<float>.Identity);
         var effector = Effector(deltas);
 
         var reached = Vector3D.Normalize(effector - Joints[0]);
@@ -55,7 +55,7 @@ public class BodyIKTests
     public void LeaningSidewaysStaysInTheSidePlane()
     {
         var target = RestEffector + new Vector3D<float>(0.2f, 0, 0);
-        var effector = Effector(BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, 0));
+        var effector = Effector(BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, Quaternion<float>.Identity, Quaternion<float>.Identity));
         Assert.That(effector.X, Is.GreaterThan(0.15f));
         Assert.That(MathF.Abs(effector.Z), Is.LessThan(1E-3f));
     }
@@ -64,7 +64,7 @@ public class BodyIKTests
     public void HeadYawTwistsTheChestPartially()
     {
         var yaw = float.DegreesToRadians(60);
-        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, RestEffector, yaw);
+        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, RestEffector, MathFactory.YRotation(yaw), Quaternion<float>.Identity);
         var expected = yaw * BodyIK.YawShares.Sum();
         Assert.That(deltas[^1].GetYaw(), Is.EqualTo(expected).Within(1E-3f));
     }
@@ -129,5 +129,63 @@ public class BodyIKTests
 
         var absolute = SyncSkeletonModifier.ClampHeadRotation(head, Quaternion<float>.Identity);
         Assert.That(BodyIK.Angle(absolute), Is.EqualTo(float.DegreesToRadians(60)).Within(1E-3f));
+    }
+
+    private static Quaternion<float> LookUp(float degrees)
+    {
+        return MathFactory.XRotation(-float.DegreesToRadians(degrees));
+    }
+
+    private static float ElevationDegrees(Quaternion<float> rotation)
+    {
+        return float.RadiansToDegrees(BodyIK.Elevation(Vector3D.Transform(Vector3D<float>.UnitZ, rotation)));
+    }
+
+    [Test]
+    public void LookingUpDoesNotHunchTheChest()
+    {
+        var target = RestEffector + new Vector3D<float>(0, -0.03f, 0.15f);
+        var plain = BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, Quaternion<float>.Identity, Quaternion<float>.Identity);
+        Assert.That(ElevationDegrees(plain[^1]), Is.LessThan(-10));
+
+        var head = LookUp(60);
+        var lookingUp = BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, head, Quaternion<float>.Identity);
+        var chest = ElevationDegrees(lookingUp[^1]);
+        Assert.That(ElevationDegrees(head) - chest, Is.LessThanOrEqualTo(45.5f));
+        Assert.That(chest, Is.GreaterThan(ElevationDegrees(plain[^1])));
+    }
+
+    [Test]
+    public void AHunchedAnimationIsStraightenedToo()
+    {
+        var chestRest = MathFactory.XRotation(float.DegreesToRadians(25));
+        var head = LookUp(50);
+        var deltas = BodyIK.SolveSpine(Joints, Neck, FaceOffset, RestEffector, head, chestRest);
+        var chest = ElevationDegrees(deltas[^1] * chestRest);
+        Assert.That(ElevationDegrees(head) - chest, Is.EqualTo(45).Within(0.5f));
+    }
+
+    [Test]
+    public void ModestLooksLeaveTheLeanAlone()
+    {
+        var target = RestEffector + new Vector3D<float>(0, -0.03f, 0.15f);
+        var plain = BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, Quaternion<float>.Identity, Quaternion<float>.Identity);
+        var looking = BodyIK.SolveSpine(Joints, Neck, FaceOffset, target, LookUp(15), Quaternion<float>.Identity);
+        for (int i = 0; i < plain.Length; i++)
+        {
+            Assert.That(BodyIK.Angle(looking[i] * plain[i].Inverse()), Is.LessThan(1E-4f));
+        }
+    }
+
+    [Test]
+    public void NeckSitsBetweenTheChestAndTheHead()
+    {
+        var chest = MathFactory.XRotation(float.DegreesToRadians(20));
+        var head = LookUp(30);
+        var neck = SyncSkeletonModifier.NeckRotation(head, chest);
+        Assert.That(ElevationDegrees(neck), Is.EqualTo(-20 + 0.35f * 50).Within(0.1f));
+
+        var level = SyncSkeletonModifier.NeckRotation(head);
+        Assert.That(ElevationDegrees(level), Is.EqualTo(0.35f * 30).Within(0.1f));
     }
 }

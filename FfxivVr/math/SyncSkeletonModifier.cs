@@ -24,7 +24,12 @@ public unsafe class SyncSkeletonModifier(
 
     public static Quaternion<float> NeckRotation(Quaternion<float> head)
     {
-        return Quaternion<float>.Slerp(Quaternion<float>.Identity, ClampHeadRotation(head), NeckShare);
+        return NeckRotation(head, Quaternion<float>.Identity);
+    }
+
+    public static Quaternion<float> NeckRotation(Quaternion<float> head, Quaternion<float> chest)
+    {
+        return Quaternion<float>.Normalize(chest * Quaternion<float>.Slerp(Quaternion<float>.Identity, ClampHeadRotation(chest.Inverse() * head), NeckShare));
     }
 
     public static Quaternion<float> ClampHeadRotation(Quaternion<float> head, Quaternion<float> chest)
@@ -140,14 +145,14 @@ public unsafe class SyncSkeletonModifier(
         {
             return;
         }
-        if (!neckSynced && structure.GetBone(HumanBones.Neck) is Bone neck)
-        {
-            skeletonModifier.SetModelRotation(neck, pose, NeckRotation(head) * structure.GetReferenceModelRotation(neck), weight);
-        }
         var chest = Quaternion<float>.Identity;
         if (structure.GetBone(HumanBones.SpineC) is Bone spine)
         {
             chest = spine.GetModelTransforms(pose)->Rotation.ToQuaternion() * structure.GetReferenceModelRotation(spine).Inverse();
+        }
+        if (!neckSynced && structure.GetBone(HumanBones.Neck) is Bone neck)
+        {
+            skeletonModifier.SetModelRotation(neck, pose, NeckRotation(head, chest) * structure.GetReferenceModelRotation(neck), weight);
         }
         skeletonModifier.SetModelRotation(face, pose, ClampHeadRotation(head, chest) * structure.GetReferenceModelRotation(face), weight);
     }

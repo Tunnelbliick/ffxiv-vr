@@ -83,14 +83,15 @@ public unsafe class BodySolver(
         var neckRotation = SyncSkeletonModifier.NeckRotation(head) * structure.GetReferenceModelRotation(neck);
         var faceOffset = Vector3D.Transform(face.ReferencePose.Translation.ToVector3D(), neckRotation);
         var target = neckPosition + faceOffset + displacement;
-        var yaw = SyncSkeletonModifier.ClampHeadRotation(head).ToYawPitchRoll().yaw;
+        var chestRest = rotations[^1] * structure.GetReferenceModelRotation(spine[^1]).Inverse();
 
-        var deltas = BodyIK.SolveSpine(joints, neckPosition, faceOffset, target, yaw);
+        var deltas = BodyIK.SolveSpine(joints, neckPosition, faceOffset, target, SyncSkeletonModifier.ClampHeadRotation(head), chestRest);
         for (int i = 0; i < spine.Length; i++)
         {
             skeletonModifier.SetModelRotation(spine[i], pose, deltas[i] * rotations[i], 1);
         }
-        skeletonModifier.SetModelRotation(neck, pose, neckRotation, 1);
+        var chest = deltas[^1] * chestRest;
+        skeletonModifier.SetModelRotation(neck, pose, SyncSkeletonModifier.NeckRotation(head, chest) * structure.GetReferenceModelRotation(neck), 1);
 
         AssistShoulder(pose, structure, HumanBones.ShoulderLeft, HumanBones.ArmLeft, HumanBones.ForearmLeft, HumanBones.HandLeft, leftWrist);
         AssistShoulder(pose, structure, HumanBones.ShoulderRight, HumanBones.ArmRight, HumanBones.ForearmRight, HumanBones.HandRight, rightWrist);
