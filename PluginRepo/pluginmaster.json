@@ -3,7 +3,7 @@
     "Author": "Steelgunner90",
     "Name": "FFXIV VR (Pose Sync test)",
     "InternalName": "FfxivVR",
-    "AssemblyVersion": "0.0.85.4",
+    "AssemblyVersion": "0.0.85.5",
     "Description": "A VR mod for FFXIV. Run /vr to open settings. Test build with pose sync: other players with this build can see your VR head and hand movements (Sync tab).",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/Tunnelbliick/ffxiv-vr",
@@ -17,10 +17,10 @@
     "LoadPriority": 69420,
     "Punchline": "A VR mod for FFXIV, with pose sync",
     "AcceptsFeedback": true,
-    "Changelog": "# Add a controller pointer and a view reset\r\nPoint a controller at the game UI or a plugin window to move the cursor\r\nthere; the trigger left-clicks and the grip right-clicks while pointing at\r\nit, decided when the button goes down so a held cross-hotbar trigger is\r\nnever turned into a click. /vr resetview and the ResetView controller\r\naction recenter the headset and turn the game camera to look where the\r\ncharacter faces.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\r\n\r\n# Show how many plugin users share your zone\r\nThe relay's keepalive reply now carries how many other clients are in\r\nthe sender's room, and the Sync tab shows it while connected, so two\r\nplayers outside VR can see each other's plugin is connected. Clients\r\nstill accept the 12-byte reply from an older relay and say the server\r\nneeds an update; older clients ignore the extra bytes. The nearby count\r\nis renamed to VR poses shown nearby, and the Share my VR pose tooltip no\r\nlonger says first person only.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
-    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.4/FfxivVR.zip",
-    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.4/FfxivVR.zip",
-    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.4/FfxivVR.zip",
-    "LastUpdated": 1795479441
+    "Changelog": "# Pass vertical shake to third person and allow up to 10x shake\r\nThe level and floor-locked third-person cameras dropped the vertical part\r\nof the game's screen shake, so stomps didn't shake the VR view; they now\r\nadd the height of the look-at offset. The Camera shake setting goes up to\r\n10x, with the scaled shake capped, and the debug window can play a test\r\nshake.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.5/FfxivVR.zip",
+    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.5/FfxivVR.zip",
+    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.5/FfxivVR.zip",
+    "LastUpdated": 1795479981
   }
 ]

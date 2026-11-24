@@ -1,20 +1,8 @@
-# Add a controller pointer and a view reset
-Point a controller at the game UI or a plugin window to move the cursor
-there; the trigger left-clicks and the grip right-clicks while pointing at
-it, decided when the button goes down so a held cross-hotbar trigger is
-never turned into a click. /vr resetview and the ResetView controller
-action recenter the headset and turn the game camera to look where the
-character faces.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-
-# Show how many plugin users share your zone
-The relay's keepalive reply now carries how many other clients are in
-the sender's room, and the Sync tab shows it while connected, so two
-players outside VR can see each other's plugin is connected. Clients
-still accept the 12-byte reply from an older relay and say the server
-needs an update; older clients ignore the extra bytes. The nearby count
-is renamed to VR poses shown nearby, and the Share my VR pose tooltip no
-longer says first person only.
+# Pass vertical shake to third person and allow up to 10x shake
+The level and floor-locked third-person cameras dropped the vertical part
+of the game's screen shake, so stomps didn't shake the VR view; they now
+add the height of the look-at offset. The Camera shake setting goes up to
+10x, with the scaled shake capped, and the debug window can play a test
+shake.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
