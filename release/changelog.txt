@@ -1,32 +1,20 @@
-# Pass the prerelease flag to gh as a value
-Splatting an array that held --prerelease made gh read a stray "-" as
-an asset path, which failed the fork release after the tag was pushed.
---prerelease=true|false works the same for forks and upstream.
+# Add a controller pointer and a view reset
+Point a controller at the game UI or a plugin window to move the cursor
+there; the trigger left-clicks and the grip right-clicks while pointing at
+it, decided when the button goes down so a held cross-hotbar trigger is
+never turned into a click. /vr resetview and the ResetView controller
+action recenter the headset and turn the game camera to look where the
+character faces.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
-# Map third-person tracking to the body, add seated play and start SteamVR
-In third person, motion tracking and the shared pose now place your
-hands and head relative to your body's heading instead of the camera, so
-they no longer flip when you look at your character from the front.
-Third-person motion tracking is a setting, on by default, and the
-shared pose is sent in third person either way. The body heading
-follows the head past 45 degrees; with the new Seated play option it
-stays at the recenter forward and sitting low no longer reads as a bow.
-
-Starting VR while SteamVR is closed now launches SteamVR and turns VR
-on once it is running, instead of letting OpenXR start it mid-session.
-
-Camera shake drops non-finite frames and resets, so a degenerate game
-view indoors can no longer latch NaN and black out the world.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-
-# Let the release workflow publish from forks
-Download links and RepoUrl now come from the repository the workflow
-runs in, and the changelog starts at the latest reachable v* tag. On a
-fork, a release bumps the fourth version number, keeps the fork's own
-listing name, description and punchline, and is marked as a prerelease.
-Upstream releases behave as before.
+# Show how many plugin users share your zone
+The relay's keepalive reply now carries how many other clients are in
+the sender's room, and the Sync tab shows it while connected, so two
+players outside VR can see each other's plugin is connected. Clients
+still accept the 12-byte reply from an older relay and say the server
+needs an update; older clients ignore the extra bytes. The nearby count
+is renamed to VR poses shown nearby, and the Share my VR pose tooltip no
+longer says first person only.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>

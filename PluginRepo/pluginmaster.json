@@ -3,7 +3,7 @@
     "Author": "Steelgunner90",
     "Name": "FFXIV VR (Pose Sync test)",
     "InternalName": "FfxivVR",
-    "AssemblyVersion": "0.0.85.3",
+    "AssemblyVersion": "0.0.85.4",
     "Description": "A VR mod for FFXIV. Run /vr to open settings. Test build with pose sync: other players with this build can see your VR head and hand movements (Sync tab).",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/Tunnelbliick/ffxiv-vr",
@@ -17,10 +17,10 @@
     "LoadPriority": 69420,
     "Punchline": "A VR mod for FFXIV, with pose sync",
     "AcceptsFeedback": true,
-    "Changelog": "# Pass the prerelease flag to gh as a value\r\nSplatting an array that held --prerelease made gh read a stray \"-\" as\r\nan asset path, which failed the fork release after the tag was pushed.\r\n--prerelease=true|false works the same for forks and upstream.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\r\n\r\n# Map third-person tracking to the body, add seated play and start SteamVR\r\nIn third person, motion tracking and the shared pose now place your\r\nhands and head relative to your body's heading instead of the camera, so\r\nthey no longer flip when you look at your character from the front.\r\nThird-person motion tracking is a setting, on by default, and the\r\nshared pose is sent in third person either way. The body heading\r\nfollows the head past 45 degrees; with the new Seated play option it\r\nstays at the recenter forward and sitting low no longer reads as a bow.\r\n\r\nStarting VR while SteamVR is closed now launches SteamVR and turns VR\r\non once it is running, instead of letting OpenXR start it mid-session.\r\n\r\nCamera shake drops non-finite frames and resets, so a degenerate game\r\nview indoors can no longer latch NaN and black out the world.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\r\n\r\n# Let the release workflow publish from forks\r\nDownload links and RepoUrl now come from the repository the workflow\r\nruns in, and the changelog starts at the latest reachable v* tag. On a\r\nfork, a release bumps the fourth version number, keeps the fork's own\r\nlisting name, description and punchline, and is marked as a prerelease.\r\nUpstream releases behave as before.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
-    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.3/FfxivVR.zip",
-    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.3/FfxivVR.zip",
-    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.3/FfxivVR.zip",
-    "LastUpdated": 1795459478
+    "Changelog": "# Add a controller pointer and a view reset\r\nPoint a controller at the game UI or a plugin window to move the cursor\r\nthere; the trigger left-clicks and the grip right-clicks while pointing at\r\nit, decided when the button goes down so a held cross-hotbar trigger is\r\nnever turned into a click. /vr resetview and the ResetView controller\r\naction recenter the headset and turn the game camera to look where the\r\ncharacter faces.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\r\n\r\n# Show how many plugin users share your zone\r\nThe relay's keepalive reply now carries how many other clients are in\r\nthe sender's room, and the Sync tab shows it while connected, so two\r\nplayers outside VR can see each other's plugin is connected. Clients\r\nstill accept the 12-byte reply from an older relay and say the server\r\nneeds an update; older clients ignore the extra bytes. The nearby count\r\nis renamed to VR poses shown nearby, and the Share my VR pose tooltip no\r\nlonger says first person only.\r\n\r\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+    "DownloadLinkInstall": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.4/FfxivVR.zip",
+    "DownloadLinkTesting": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.4/FfxivVR.zip",
+    "DownloadLinkUpdate": "https://github.com/Tunnelbliick/ffxiv-vr/releases/download/v0.0.85.4/FfxivVR.zip",
+    "LastUpdated": 1795479441
   }
 ]
